@@ -8,6 +8,11 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        primary: '#2379BC',
+        success: '#2CC069',
+        error: '#E94242',
+      },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic':
