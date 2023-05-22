@@ -5,12 +5,12 @@ export default async function handler(req, res) {
     //read all messages
     switch (req.method) {
         case 'POST':
-            const { messagesIds } = req.body;
+            const { senderId, receiverId } = req.body;
             const updatedMessages = await prisma.message.updateMany({
                 where: {
-                    id: {
-                        in: messagesIds
-                    }
+                    senderId: senderId,
+                    receiverId: receiverId,
+                    read: false
                 },
                 data: {
                     read: true

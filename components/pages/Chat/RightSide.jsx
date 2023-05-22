@@ -12,6 +12,7 @@ import Picker from '@emoji-mart/react'
 import { useAtom } from 'jotai';
 import { activeUserAtom, loggedInUserAtom } from '@jotai/chat';
 import axios from 'axios';
+import moment from 'moment/moment';
 
 const RightSide = ({ filteredMessages }) => {
     const [value, setValue] = useState('');
@@ -45,13 +46,24 @@ const RightSide = ({ filteredMessages }) => {
         })
     }
 
+    const onFocusBlur = () => {
+        axios.post('/api/messages/read', {
+            senderId: activeUser.id,
+            receiverId: loggedInUser.id
+        }).then(res => {
+            console.log(res)
+        }).catch(err => {
+            console.log(err)
+        })
+    }
+
 
     return (
         <div className='bg-white rounded-lg '>
             <MessageHeader />
-            <div className='p-10 min-h-[500px]'>
-                <div className='min-h-[500px]'>
-                    <div className='flex justify-center items-center h-full'>
+            <div className='p-10'>
+                <div className='h-[500px] overflow-auto px-2'>
+                    <div className='flex justify-center items-center'>
                         <div className='text-gray-500 text-sm'>18/20/2020</div>
                     </div>
                     <div className="space-y-2">
@@ -63,9 +75,17 @@ const RightSide = ({ filteredMessages }) => {
                                         <div className='bg-primary text-white rounded-lg rounded-br-none p-3'>
                                             <div className='text-sm'>{message.text}</div>
                                             <div className="flex items-center justify-end mt-3 gap-[4px]">
-                                                <div className='text-xs text-gray-300'>10:00</div>
+                                                <div className='text-xs text-gray-300'>
+                                                    {
+                                                        moment(message.createdAt).format('hh:mm')
+                                                    }
+                                                </div>
                                                 <div className='-mt-2'>.</div>
-                                                <div className='text-xs text-gray-300'>Read</div>
+                                                <div className='text-xs text-gray-300'>
+                                                    {
+                                                        message?.read ? 'read' : 'sent'
+                                                    }
+                                                </div>
 
                                             </div>
 
@@ -75,7 +95,11 @@ const RightSide = ({ filteredMessages }) => {
                                     <div key={message.id} className='flex justify-start items-center h-full'>
                                         <div className='bg-gray-100 text-black rounded-lg rounded-tl-none p-3'>
                                             <div className='text-sm'>{message.text}</div>
-                                            <div className='text-xs text-gray-500 mt-3'>10:00</div>
+                                            <div className='text-xs text-gray-500 mt-3'>
+                                                {
+                                                    moment(message.createdAt).format('hh:mm')
+                                                }
+                                            </div>
                                         </div>
                                     </div>
                                 )))
@@ -129,6 +153,8 @@ const RightSide = ({ filteredMessages }) => {
                             fullWidth
                             multiline
                             onChange={e => setValue(e.target.value)}
+                            onFocus={onFocusBlur}
+                            onBlur={onFocusBlur}
                         />
                         <div className="flex items-end">
                             <div className='bg-primary text-white rounded h-10 w-10 flex justify-center items-center mb-1 cursor-pointer' onClick={handleSendMessage}>

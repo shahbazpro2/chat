@@ -3,13 +3,14 @@ import React, { useEffect, useRef, useState } from 'react'
 import LeftSide from './LeftSide'
 import RightSide from './RightSide'
 import { useAtom } from 'jotai'
-import { loggedInUserAtom, setLoggedInUserAtom } from '@jotai/chat'
+import { loggedInUserAtom, pinnedUserAtom, setLoggedInUserAtom, setPinnedUserAtom, setPinnedUsersAtom } from '@jotai/chat'
 import axios from 'axios'
 
 const Chat = () => {
     const ref = useRef(true)
     const [loggedInUser] = useAtom(loggedInUserAtom)
     const [, setLoggedInUser] = useAtom(setLoggedInUserAtom)
+    const [, setPinnedUsers] = useAtom(setPinnedUsersAtom)
     const [messages, setMessages] = useState([])
     const [users, setUsers] = useState([])
 
@@ -36,6 +37,11 @@ const Chat = () => {
                         setLoggedInUser(res.data)
                     })
                     .catch(err => console.log(err))
+                axios.get(`/api/users/pinned?id=${promptUser}`)
+                    .then(res => {
+                        setPinnedUsers(res.data)
+                    })
+
 
                 getMessages(promptUser)
 

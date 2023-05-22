@@ -3,30 +3,35 @@ const prisma = new PrismaClient()
 export default async function handler(req, res) {
     switch (req.method) {
         case 'POST':
-            const { pinnedBy, pinned } = req.body;
-            const newPinned = await prisma.pinned.create({
+            const { pinnedById, pinnedId } = req.body;
+            const newPinned = await prisma.pinnedUser.create({
                 data: {
-                    pinnedBy,
-                    pinned
+                    pinnedById,
+                    pinnedId
                 },
+                include: {
+                    pinned: true,
+                    pinnedBy: true
+                }
             });
             return res.status(201).json(newPinned);
         case 'GET':
-            const user = req.query.user;
-            const pinnedUsers = await prisma.pinned.findMany({
+            const user = req.query.id;
+            const pinnedUsers = await prisma.pinnedUser.findMany({
                 where: {
-                    pinnedBy: Number(user),
+                    pinnedById: Number(user),
                 },
                 include: {
-                    user: true
+                    pinned: true,
+                    pinnedBy: true
                 }
             });
             return res.status(200).json(pinnedUsers);
         case 'DELETE':
-            const { pinnedId } = req.body;
-            const deletedPinned = await prisma.pinned.delete({
+            const id = req.query.id;
+            const deletedPinned = await prisma.pinnedUser.delete({
                 where: {
-                    id: Number(pinnedId),
+                    id: Number(id),
                 },
             });
             return res.status(200).json(deletedPinned);

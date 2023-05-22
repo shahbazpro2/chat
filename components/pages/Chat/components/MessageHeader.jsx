@@ -5,23 +5,36 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import PopupState, { bindMenu, bindTrigger } from 'material-ui-popup-state';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import VolumeOffOutlinedIcon from '@mui/icons-material/VolumeOffOutlined';
-import { activeUserAtom, pinnedUserAtom, setPinnedUserAtom } from '@jotai/chat';
+import { activeUserAtom, loggedInUserAtom, pinnedUserAtom, setPinnedUserAtom } from '@jotai/chat';
 import { useAtom } from 'jotai';
 import { removePinnedUserAtom } from '@jotai/chat';
+import axios from 'axios';
 
 const MessageHeader = () => {
+    const [loggedInUser] = useAtom(loggedInUserAtom)
     const [activeUser] = useAtom(activeUserAtom)
     const [, setPinUser] = useAtom(setPinnedUserAtom)
     const [, removePinUser] = useAtom(removePinnedUserAtom)
     const [pinnedUsers] = useAtom(pinnedUserAtom)
 
     const onPinClick = (popupState) => {
-        isActiveUserPinned ? removePinUser(activeUser) :
-            setPinUser(activeUser)
+        if (isActiveUserPinned?.id) {
+            axios.delete(`/api/users/pinned?id=${isActiveUserPinned?.id}`).then(res => {
+                removePinUser(isActiveUserPinned)
+            })
+            return
+        }
+        axios.post('/api/users/pinned', {
+            pinnedById: loggedInUser.id,
+            pinnedId: activeUser.id
+        }).then(res => {
+            setPinUser(res.data)
+        })
+
         popupState.close()
     }
 
-    const isActiveUserPinned = pinnedUsers?.find(p => p.id === activeUser?.id)
+    const isActiveUserPinned = pinnedUsers?.filter(p => p?.pinned?.id === activeUser?.id)?.[0]
 
     return (
         <>

@@ -13,7 +13,7 @@ import S3 from 'aws-sdk/clients/s3';
 
 const s3 = new S3({
     accessKeyId: 'AKIAXSRZMZZFQA7AGPZB',
-    secretAccessKey: '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',
+    secretAccessKey: 'mKWjvOSIlUXVSzDXmCseDkhMey8FQ+WfHO1WF7+D',
     region: 'us-east-1',
     signatureVersion: 'v4',
 })
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
                 Key: 'test',
                 ContentType: 'png',
                 Body: req.body,
-                ACL: 'public-read'
+
             };
             s3.upload(params, (err, data) => {
                 if (err) {
@@ -66,14 +66,21 @@ export default async function handler(req, res) {
             break;
         case 'GET':
 
-            s3.listObjectsV2(params, (err, data) => {
+            const params2 = {
+                Bucket: 'prommuni-test-fiverr',
+                Key: 'test',
+            };
+            s3.getObject(params2, (err, data) => {
                 if (err) {
                     console.log(err);
                     return res.status(500).json(err);
                 }
-                return res.status(200).json(data.Contents);
-            }
-            );
+
+                //convert to image
+                const img = Buffer.from(data.Body).toString('base64');
+                return res.status(200).json(img);
+            });
+
             break;
         default:
             res.setHeader('Allow', ['GET', 'POST']);

@@ -1,5 +1,4 @@
 /* eslint-disable @next/next/no-img-element */
-import { Avatar, Badge } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import ChatItem from './components/ChatItem'
 import { activeUserAtom, pinnedUserAtom, setActiveUserAtom } from '@jotai/chat'
@@ -17,7 +16,7 @@ const LeftSide = ({ users, filteredMessages }) => {
 
     useEffect(() => {
         const filteredUsers = users?.filter(u => filteredMessages.find(m => {
-            if (m.senderId === u.id && !pinnedUsers?.find(p => p.id === u.id)) {
+            if (m.senderId === u.id && !pinnedUsers?.find(p => p?.pinned?.id === u.id)) {
                 return true
             }
         })
@@ -32,6 +31,7 @@ const LeftSide = ({ users, filteredMessages }) => {
             setActiveUser(unpinnedUsers[0])
         }
     }, [])
+
 
     useEffect(() => {
         setSearchUsers(unpinnedUsers.filter(u => u.name.toLowerCase().includes(search.toLowerCase())))
@@ -51,8 +51,8 @@ const LeftSide = ({ users, filteredMessages }) => {
                 <ul>
                     {
                         pinnedUsers?.map((user) => (
-                            <li key={user?.id} className={`py-4 px-10 cursor-pointer ${user.id === activeUser?.id && 'bg-gray-100'}`} onClick={() => setActiveUser(user)}>
-                                <ChatItem user={user} filteredMessages={filteredMessages} />
+                            <li key={user?.pinned?.id} className={`py-4 px-10 cursor-pointer ${user?.pinned?.id === activeUser?.id && 'bg-gray-100'}`} onClick={() => setActiveUser(user?.pinned)}>
+                                <ChatItem user={user?.pinned} filteredMessages={filteredMessages} />
                             </li>
                         ))
                     }

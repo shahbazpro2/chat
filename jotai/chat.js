@@ -22,6 +22,25 @@ export const setLoggedInUserAtom = atom(
     }
 );
 
+//set pinned users
+export const setPinnedUsersAtom = atom(
+    null,
+    (get, set, pinnedUsers) => {
+        const existing = get(pinnedUserAtom);
+        if (!existing) {
+            set(pinnedUserAtom, pinnedUsers);
+            return;
+        }
+        const filterExisting = pinnedUsers.filter(user => {
+            const index = existing?.findIndex(item => item?.pinned?.id === user?.pinned?.id);
+            return index === -1;
+        });
+
+        set(pinnedUserAtom, filterExisting);
+    }
+
+);
+
 //set pinned user
 export const setPinnedUserAtom = atom(
     null,
