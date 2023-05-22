@@ -1,8 +1,7 @@
 import { Avatar, Badge } from '@mui/material'
 import React from 'react'
-import { filteredMessages } from '../data'
 
-const ChatItem = ({ user }) => {
+const ChatItem = ({ user, filteredMessages }) => {
     const { name, online } = user
 
     return (
@@ -20,7 +19,7 @@ const ChatItem = ({ user }) => {
                 </Badge>
                 <div className="ml-3 space-y-1">
                     <div className="font-semibold">{name}</div>
-                    <div className="text-gray-500 text-sm">{filteredMessages.filter(message => message.senderId === user.id).reverse().pop()?.text}</div>
+                    <div className="text-gray-500 text-sm">{filteredMessages.filter(message => message.receiverId === user.id).reverse().pop()?.text}</div>
                 </div>
             </div>
             <div className='text-right'>

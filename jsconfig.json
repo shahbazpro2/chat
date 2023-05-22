@@ -5,6 +5,7 @@
       "@pages/*": ["./components/pages/*"],
       "@components/*": ["./components/*"],
       "@jotai/*": ["./jotai/*"],
+      "@backend/*": ["./backend/*"],
       "@/*": ["./src/*"],
     }
   }

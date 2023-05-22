@@ -1,0 +1,44 @@
+datasource db {
+    provider = "postgresql"
+    url      = "postgresql://postgres:0321@localhost:5432/postgres"
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+model User {
+    id               Int          @id @default(autoincrement())
+    name             String
+    email            String       @unique
+    createdAt        DateTime     @default(now())
+    updatedAt        DateTime     @updatedAt
+    sentMessages     Message[]    @relation("Sender")
+    receivedMessages Message[]    @relation("Receiver")
+    online           Boolean      @default(false)
+    lastSeen         DateTime?
+    pinnedBy         PinnedUser[] @relation("PinnedBy")
+    pinned           PinnedUser[] @relation("Pinned")
+}
+
+model Message {
+    id         Int      @id @default(autoincrement())
+    text       String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+    senderId   Int
+    sender     User     @relation("Sender", fields: [senderId], references: [id])
+    receiverId Int
+    receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
+    read       Boolean  @default(false)
+}
+
+model PinnedUser {
+    id         Int      @id @default(autoincrement())
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+    pinnedById Int
+    pinnedBy   User     @relation("Pinned", fields: [pinnedById], references: [id])
+    pinnedId   Int
+    pinned     User     @relation("PinnedBy", fields: [pinnedId], references: [id])
+}

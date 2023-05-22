@@ -10,13 +10,14 @@ import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSati
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { useAtom } from 'jotai';
-import { activeUserAtom } from '@jotai/chat';
-import { filteredMessages, loggedInUser } from './data';
+import { activeUserAtom, loggedInUserAtom } from '@jotai/chat';
+import axios from 'axios';
 
-const RightSide = () => {
+const RightSide = ({ filteredMessages }) => {
     const [value, setValue] = useState('');
     const [showAttach, setShowAttach] = useState(false);
     const [showEmoji, setShowEmoji] = useState(false);
+    const [loggedInUser] = useAtom(loggedInUserAtom)
     const [activeUser] = useAtom(activeUserAtom)
     const [meassagesList, setMeassagesList] = useState([])
 
@@ -28,7 +29,21 @@ const RightSide = () => {
         })
         setMeassagesList(filterMessages)
 
-    }, [activeUser])
+    }, [activeUser, filteredMessages])
+
+    const handleSendMessage = (e) => {
+        e.preventDefault()
+        if (!value) return
+        axios.post('/api/messages', {
+            senderId: loggedInUser.id,
+            receiverId: activeUser.id,
+            text: value
+        }).then(res => {
+            setValue('')
+        }).catch(err => {
+            console.log(err)
+        })
+    }
 
 
     return (
@@ -72,7 +87,7 @@ const RightSide = () => {
                     setShowAttach(false)
                     setShowEmoji(false)
                 }}>
-                    <div className='rounded-xl bg-gray-100 p-7 flex gap-3 relative'>
+                    <div className='rounded-xl bg-gray-100 p-7 flex gap-3 relative mt-5'>
                         <>
 
                             {
@@ -116,7 +131,7 @@ const RightSide = () => {
                             onChange={e => setValue(e.target.value)}
                         />
                         <div className="flex items-end">
-                            <div className='bg-primary text-white rounded h-10 w-10 flex justify-center items-center mb-1'>
+                            <div className='bg-primary text-white rounded h-10 w-10 flex justify-center items-center mb-1 cursor-pointer' onClick={handleSendMessage}>
                                 <SendIcon />
                             </div>
                         </div>
