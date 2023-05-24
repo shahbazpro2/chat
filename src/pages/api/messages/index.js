@@ -4,10 +4,11 @@ const prisma = new PrismaClient()
 export default async function handler(req, res) {
     switch (req.method) {
         case 'POST':
-            const { text, senderId, receiverId } = req.body;
+            const { text, senderId, receiverId, file } = req.body;
             const newMessage = await prisma.message.create({
                 data: {
                     text,
+                    file,
                     senderId,
                     receiverId
                 }

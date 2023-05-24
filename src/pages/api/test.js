@@ -1,29 +1,34 @@
-import multerMiddleware from '@backend/utils/multer';
-import S3 from 'aws-sdk/clients/s3';
+
+import { ListObjectsV2Command } from '@aws-sdk/client-s3';
+import multer from 'multer';
+import multerS3 from 'multer-s3';
+const { S3Client } = require("@aws-sdk/client-s3");
 
 
+const s3 = new S3Client({
+    credentials: {
+        accessKeyId: "AKIAXSRZMZZFQA7AGPZB",
+        secretAccessKey: "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"
+    },
+    region: "us-east-1"
+})
 
-/* AWS.config.update({
-    accessKeyId: 'AKIAXSRZMZZFQA7AGPZB',
-    secretAccessKey: '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',
-    region: 's3://prommuni-test-fiverr/',
-}) */
-
-//make api upload and get all files from s3 bucket using latest v3
-
-const s3 = new S3({
-    accessKeyId: 'AKIAXSRZMZZFQA7AGPZB',
-    secretAccessKey: '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',
-    region: 'us-east-1',
-    signatureVersion: 'v4',
+const upload = multer({
+    storage: multerS3({
+        bucket: 'prommuni-test-fiverr',
+        s3,
+        acl: 'public-read',
+        contentType: multerS3.AUTO_CONTENT_TYPE,
+        key: function (req, file, cb) {
+            cb(null, Date.now().toString() + '-' + file.originalname);
+        }
+    })
 })
 
 
 export const config = {
     api: {
-        bodyParser: {
-            sizeLimit: '8mb'
-        },
+        bodyParser: false,
     },
 };
 
@@ -36,51 +41,42 @@ export default async function handler(req, res) {
     switch (req.method) {
         case 'POST':
             //read file from request
-
-
-
-            const params = {
-                Bucket: 'prommuni-test-fiverr',
-                Key: 'test',
-                ContentType: 'png',
-                Body: req.body,
-
-            };
-            s3.upload(params, (err, data) => {
+            upload.single('file')(req, res, function (err) {
                 if (err) {
                     console.log(err);
                     return res.status(500).json(err);
                 }
-                return res.status(200).json(data);
+                return res.status(200).json({ message: 'File uploaded successfully', url: req.file.location });
             });
-
-            /*  const fileParam = {
-                 Bucket: 'test',
-                 Key: name,
-                 ContentType: type,
-                 Expires: 600,
-                 ACL: 'public-read'
-             }
-             const url = await s3.getSignedUrlPromise('putObject', fileParam);
-             res.status(200).json({ url }); */
             break;
         case 'GET':
 
-            const params2 = {
-                Bucket: 'prommuni-test-fiverr',
-                Key: 'test',
-            };
-            s3.getObject(params2, (err, data) => {
-                if (err) {
-                    console.log(err);
-                    return res.status(500).json(err);
-                }
-
-                //convert to image
-                const img = Buffer.from(data.Body).toString('base64');
-                return res.status(200).json(img);
+            const command = new ListObjectsV2Command({
+                Bucket: "prommuni-test-fiverr",
+                // The default and maximum number of keys returned is 1000. This limits it to
+                // one for demonstration purposes.
+                MaxKeys: 1,
             });
 
+            try {
+                let isTruncated = true;
+
+                console.log("Your bucket contains the following objects:\n")
+                let contents = "";
+
+                while (isTruncated) {
+                    const { Contents, IsTruncated, NextContinuationToken } = await s3.send(command);
+                    const contentsList = Contents.map((c) => ` • ${c.Key}`).join("\n");
+                    contents += contentsList + "\n";
+                    isTruncated = IsTruncated;
+                    command.input.ContinuationToken = NextContinuationToken;
+                }
+                console.log(contents);
+                return res.status(200).json(contents);
+
+            } catch (err) {
+                console.error(err);
+            }
             break;
         default:
             res.setHeader('Allow', ['GET', 'POST']);

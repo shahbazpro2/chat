@@ -4,11 +4,9 @@ import React from 'react'
 
 const ChatItem = ({ user, filteredMessages }) => {
     const { name, online } = user || {}
-    console.log('filterere', filteredMessages)
     const senderMessages = filteredMessages.filter(message => message.senderId === user?.id).slice(-1)
     const unreadMessages = senderMessages.filter(message => !message.read).length
 
-    console.log('senderMessages', senderMessages)
 
     return (
         <div className='flex items-center justify-between'>
@@ -24,7 +22,7 @@ const ChatItem = ({ user, filteredMessages }) => {
                     <Avatar alt="Travis Howard" src="/static/images/avatar/2.jpg" />
                 </Badge>
                 <div className="ml-3 space-y-1">
-                    <div className="font-semibold">{name}</div>
+                    <div className="font-semibold capitalize">{name}</div>
                     <div className="text-gray-500 text-sm">{senderMessages?.[0]?.text}</div>
                 </div>
             </div>

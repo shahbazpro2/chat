@@ -2,9 +2,9 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 export default async function handler(req, res) {
+    const userId = req.query.id;
     switch (req.method) {
         case 'GET':
-            const userId = req.query.id;
             const user = await prisma.user.findUnique({
                 where: {
                     id: Number(userId),
@@ -12,13 +12,17 @@ export default async function handler(req, res) {
             });
             return res.status(200).json(user);
         case 'PATCH':
-            const patchUser = await prisma.user.update({
+            //set lastSeen to current time
+            const userData = await prisma.user.update({
                 where: {
-                    id: Number(req.query.id),
+                    id: Number(userId),
                 },
-                data: req.body,
+                data: {
+                    lastSeen: new Date().toISOString(),
+                    ...req.body,
+                },
             });
-            return res.status(200).json(patchUser);
+            return res.status(200).json(userData);
         default:
             return res.status(405).json({ message: 'Method not allowed' });
     }

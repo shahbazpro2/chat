@@ -23,6 +23,10 @@ const RightSide = ({ filteredMessages }) => {
     const [meassagesList, setMeassagesList] = useState([])
 
     useEffect(() => {
+        document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
+    }, [])
+
+    useEffect(() => {
         if (!activeUser) return
 
         const filterMessages = filteredMessages.filter((message) => {
@@ -35,6 +39,8 @@ const RightSide = ({ filteredMessages }) => {
     const handleSendMessage = (e) => {
         e.preventDefault()
         if (!value) return
+        //smooth scroll to bottom
+        document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
         axios.post('/api/messages', {
             senderId: loggedInUser.id,
             receiverId: activeUser.id,
@@ -50,8 +56,6 @@ const RightSide = ({ filteredMessages }) => {
         axios.post('/api/messages/read', {
             senderId: activeUser.id,
             receiverId: loggedInUser.id
-        }).then(res => {
-            console.log(res)
         }).catch(err => {
             console.log(err)
         })
@@ -62,11 +66,11 @@ const RightSide = ({ filteredMessages }) => {
         <div className='bg-white rounded-lg '>
             <MessageHeader />
             <div className='p-10'>
-                <div className='h-[500px] overflow-auto px-2'>
+                <div className='h-[500px] overflow-auto px-2' id="msg-body">
                     <div className='flex justify-center items-center'>
                         <div className='text-gray-500 text-sm'>18/20/2020</div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2" >
 
                         {
                             meassagesList.map((message, index) => (

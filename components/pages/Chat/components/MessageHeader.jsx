@@ -9,6 +9,7 @@ import { activeUserAtom, loggedInUserAtom, pinnedUserAtom, setPinnedUserAtom } f
 import { useAtom } from 'jotai';
 import { removePinnedUserAtom } from '@jotai/chat';
 import axios from 'axios';
+import moment from 'moment';
 
 const MessageHeader = () => {
     const [loggedInUser] = useAtom(loggedInUserAtom)
@@ -33,7 +34,6 @@ const MessageHeader = () => {
 
         popupState.close()
     }
-
     const isActiveUserPinned = pinnedUsers?.filter(p => p?.pinned?.id === activeUser?.id)?.[0]
 
     return (
@@ -44,8 +44,13 @@ const MessageHeader = () => {
                         <Avatar alt="Travis Howard" />
                     </div>
                     <div className='text-center'>
-                        <div className="font-semibold">{activeUser?.name}</div>
-                        <div className="text-gray-500 text-sm">Active 3m ago</div>
+                        <div className="font-semibold capitalize">{activeUser?.name}</div>
+                        <div className="text-gray-500 text-sm">
+                            {/*Active 3m ago*/}
+                            {
+                                activeUser?.online ? 'Online' : moment(activeUser?.lastSeen).fromNow()
+                            }
+                        </div>
                     </div>
                     <div className='flex justify-end items-center'>
                         <PopupState variant="popover" >

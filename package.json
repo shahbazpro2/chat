@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@aws-sdk/abort-controller": "^3.329.0",
-    "@aws-sdk/client-s3": "^3.335.0",
+    "@aws-sdk/client-s3": "^3.338.0",
     "@emoji-mart/data": "^1.1.2",
     "@emoji-mart/react": "^1.1.1",
     "@emotion/react": "^11.10.8",
