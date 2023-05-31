@@ -4,18 +4,22 @@ import multer from 'multer';
 import multerS3 from 'multer-s3';
 const { S3Client } = require("@aws-sdk/client-s3");
 
+const { bucket, accessKeyId, secretAccessKey } = process.env;
+
+console.log(bucket, accessKeyId, secretAccessKey)
+
 
 const s3 = new S3Client({
     credentials: {
-        accessKeyId: "AKIAXSRZMZZFQA7AGPZB",
-        secretAccessKey: "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"
+        accessKeyId,
+        secretAccessKey
     },
     region: "us-east-1"
 })
 
 const upload = multer({
     storage: multerS3({
-        bucket: 'prommuni-test-fiverr',
+        bucket,
         s3,
 
         contentType: multerS3.AUTO_CONTENT_TYPE,
