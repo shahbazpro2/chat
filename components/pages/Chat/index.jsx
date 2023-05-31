@@ -3,19 +3,22 @@ import Header from '@common/Header'
 import React, { useEffect, useRef, useState } from 'react'
 import LeftSide from './LeftSide'
 import RightSide from './RightSide'
-import { useAtom } from 'jotai'
+import { useAtom, useSetAtom } from 'jotai'
 import { activeUserAtom, loggedInUserAtom, pinnedUserAtom, setActiveUserAtom, setLoggedInUserAtom, setPinnedUserAtom, setPinnedUsersAtom } from '@jotai/chat'
 import axios from 'axios'
+import { Button } from '@mui/material'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const Chat = () => {
     const ref = useRef(true)
     const [activeUser] = useAtom(activeUserAtom)
-    const [, setActiveUser] = useAtom(setActiveUserAtom)
+    const setActiveUser = useSetAtom(setActiveUserAtom)
     const [loggedInUser] = useAtom(loggedInUserAtom)
-    const [, setLoggedInUser] = useAtom(setLoggedInUserAtom)
-    const [, setPinnedUsers] = useAtom(setPinnedUsersAtom)
+    const setLoggedInUser = useSetAtom(setLoggedInUserAtom)
+    const setPinnedUsers = useSetAtom(setPinnedUsersAtom)
     const [messages, setMessages] = useState([])
     const [users, setUsers] = useState([])
+    const [activeClick, setActiveClick] = useState(false)
     useEffect(() => {
         const handleBeforeUnload = async () => {
             localStorage.getItem('userId')
@@ -39,7 +42,7 @@ const Chat = () => {
         if (!loggedInUser) return
         const messageInterval = setInterval(() => {
             getMessages(loggedInUser?.id)
-            if (!activeUser) return
+            if (!activeUser || !activeClick) return
             axios.get(`/api/users/${activeUser?.id}`)
                 .then(res => {
                     setActiveUser(res.data)
@@ -51,7 +54,7 @@ const Chat = () => {
             clearInterval(messageInterval)
         }
 
-    }, [loggedInUser, activeUser])
+    }, [loggedInUser, activeClick])
 
 
     useEffect(() => {
@@ -96,17 +99,32 @@ const Chat = () => {
             .catch(err => console.log(err))
     }
 
+    const onBackClick = () => {
+        setActiveClick(false)
+        setActiveUser(null)
+    }
+
 
 
     return (
         <div>
             <Header />
-            <div className="grid grid-cols-12 gap-7 p-16" >
-                <div className="col-span-3">
-                    <LeftSide users={users} filteredMessages={messages} />
+            <div className="grid grid-cols-12 gap-2 xl:gap-7 p-3 sm:p-5 2xl:p-16" >
+                <div className="col-span-12 block xl:hidden">
+                    {
+                        activeClick ?
+                            <Button disableElevation variant="text" sx={{ fontSize: 18, fontWeight: 500 }} startIcon={<ArrowBackIcon />} onClick={onBackClick} >Users</Button> :
+                            <LeftSide users={users} filteredMessages={messages} setActiveClick={setActiveClick} />
+                    }
                 </div>
-                <div className="col-span-9">
-                    <RightSide filteredMessages={messages} />
+                <div className="xl:col-span-4 2xl:col-span-3 hidden xl:block">
+                    <LeftSide users={users} filteredMessages={messages} setActiveClick={setActiveClick} />
+                </div>
+                <div className="xl:col-span-8 2xl:col-span-9 col-span-12">
+                    {
+                        activeClick &&
+                        <RightSide filteredMessages={messages} />
+                    }
                 </div>
             </div>
         </div>

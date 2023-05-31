@@ -6,7 +6,7 @@ import PopupState, { bindMenu, bindTrigger } from 'material-ui-popup-state';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import VolumeOffOutlinedIcon from '@mui/icons-material/VolumeOffOutlined';
 import { activeUserAtom, loggedInUserAtom, pinnedUserAtom, setPinnedUserAtom } from '@jotai/chat';
-import { useAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import { removePinnedUserAtom } from '@jotai/chat';
 import axios from 'axios';
 import moment from 'moment';
@@ -14,8 +14,8 @@ import moment from 'moment';
 const MessageHeader = () => {
     const [loggedInUser] = useAtom(loggedInUserAtom)
     const [activeUser] = useAtom(activeUserAtom)
-    const [, setPinUser] = useAtom(setPinnedUserAtom)
-    const [, removePinUser] = useAtom(removePinnedUserAtom)
+    const setPinUser = useSetAtom(setPinnedUserAtom)
+    const removePinUser = useSetAtom(removePinnedUserAtom)
     const [pinnedUsers] = useAtom(pinnedUserAtom)
 
     const onPinClick = (popupState) => {
@@ -68,9 +68,9 @@ const MessageHeader = () => {
                                         <MenuItem onClick={() => onPinClick(popupState)}>
                                             <PushPinOutlinedIcon className='rotate-45' />&nbsp; {isActiveUserPinned ? 'Unpin Chat' : 'Pin Chat'}
                                         </MenuItem>
-                                        <MenuItem onClick={popupState.close}>
+                                        {/*  <MenuItem onClick={popupState.close}>
                                             <VolumeOffOutlinedIcon />&nbsp; Mute Chat
-                                        </MenuItem>
+                                        </MenuItem> */}
                                     </Menu>
                                 </React.Fragment>
                             )}

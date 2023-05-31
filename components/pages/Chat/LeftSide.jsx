@@ -5,7 +5,7 @@ import { activeUserAtom, pinnedUserAtom, setActiveUserAtom } from '@jotai/chat'
 import { useAtom } from 'jotai'
 
 
-const LeftSide = ({ users, filteredMessages }) => {
+const LeftSide = ({ users, filteredMessages, setActiveClick }) => {
     const [activeUser] = useAtom(activeUserAtom)
     const [, setActiveUser] = useAtom(setActiveUserAtom)
     const [search, setSearch] = useState('')
@@ -37,6 +37,11 @@ const LeftSide = ({ users, filteredMessages }) => {
         setSearchUsers(unpinnedUsers.filter(u => u.name.toLowerCase().includes(search.toLowerCase())))
     }, [search, unpinnedUsers])
 
+    const onActiveClick = (user) => {
+        setActiveUser(user)
+        setActiveClick(true)
+    }
+
     return (
         <div className='bg-white rounded-lg py-10'>
             <div className="pb-2">
@@ -51,7 +56,7 @@ const LeftSide = ({ users, filteredMessages }) => {
                 <ul>
                     {
                         pinnedUsers?.map((user) => (
-                            <li key={user?.pinned?.id} className={`py-4 px-10 cursor-pointer ${user?.pinned?.id === activeUser?.id && 'bg-gray-100'}`} onClick={() => setActiveUser(user?.pinned)}>
+                            <li key={user?.pinned?.id} className={`py-4 px-10 cursor-pointer ${user?.pinned?.id === activeUser?.id && 'bg-gray-100'}`} onClick={() => onActiveClick(user?.pinned)}>
                                 <ChatItem user={user?.pinned} filteredMessages={filteredMessages} />
                             </li>
                         ))
@@ -67,7 +72,7 @@ const LeftSide = ({ users, filteredMessages }) => {
             <ul>
                 {
                     searchUsers.map((user) => (
-                        <li key={user?.id} className={`py-4 px-10 cursor-pointer ${user.id === activeUser?.id && 'bg-gray-100'}`} onClick={() => setActiveUser(user)}>
+                        <li key={user?.id} className={`py-4 px-10 cursor-pointer ${user.id === activeUser?.id && 'bg-gray-100'}`} onClick={() => onActiveClick(user)}>
                             <ChatItem user={user} filteredMessages={filteredMessages} />
                         </li>
                     ))

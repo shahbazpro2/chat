@@ -22,7 +22,7 @@ const ChatItem = ({ user, filteredMessages }) => {
                     <Avatar alt="Travis Howard" src="/static/images/avatar/2.jpg" />
                 </Badge>
                 <div className="ml-3 space-y-1">
-                    <div className="font-semibold capitalize">{name}</div>
+                    <div className={`${unreadMessages ? 'font-semibold' : ''} capitalize`}>{name}</div>
                     <div className="text-gray-500 text-sm">{senderMessages?.[0]?.text}</div>
                 </div>
             </div>

@@ -17,7 +17,7 @@ const upload = multer({
     storage: multerS3({
         bucket: 'prommuni-test-fiverr',
         s3,
-        acl: 'public-read',
+
         contentType: multerS3.AUTO_CONTENT_TYPE,
         key: function (req, file, cb) {
             cb(null, Date.now().toString() + '-' + file.originalname);

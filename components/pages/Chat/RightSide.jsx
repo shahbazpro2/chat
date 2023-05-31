@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import MessageHeader from './components/MessageHeader'
 import { Avatar, ClickAwayListener, TextField } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send';
@@ -20,19 +20,38 @@ const RightSide = ({ filteredMessages }) => {
     const [showEmoji, setShowEmoji] = useState(false);
     const [loggedInUser] = useAtom(loggedInUserAtom)
     const [activeUser] = useAtom(activeUserAtom)
-    const [meassagesList, setMeassagesList] = useState([])
+    const oldMessages = useRef(filteredMessages.length)
+    const [meassagesList, setMeassagesList] = useState({})
 
     useEffect(() => {
         document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
     }, [])
 
+
     useEffect(() => {
         if (!activeUser) return
-
-        const filterMessages = filteredMessages.filter((message) => {
-            return message.senderId === activeUser.id || message.receiverId === activeUser.id
+        const datewiseMessages = {}
+        filteredMessages.forEach((message) => {
+            if (message.senderId === activeUser.id || message.receiverId === activeUser.id) {
+                const date = moment(message.createdAt).format('DD/MM/YYYY')
+                if (datewiseMessages[date]) {
+                    datewiseMessages[date].push(message)
+                } else {
+                    datewiseMessages[date] = [message]
+                }
+            }
         })
-        setMeassagesList(filterMessages)
+        setMeassagesList(datewiseMessages)
+        if (oldMessages.current < filteredMessages.length) {
+            const scroll = setTimeout(() => {
+                document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
+                oldMessages.current = filteredMessages.length
+            }, 1000)
+        }
+
+        return (() => {
+            clearTimeout(scroll)
+        })
 
     }, [activeUser, filteredMessages])
 
@@ -65,57 +84,68 @@ const RightSide = ({ filteredMessages }) => {
     return (
         <div className='bg-white rounded-lg '>
             <MessageHeader />
-            <div className='p-10'>
+            <div className='sm:p-10 p-1'>
                 <div className='h-[500px] overflow-auto px-2' id="msg-body">
-                    <div className='flex justify-center items-center'>
-                        <div className='text-gray-500 text-sm'>18/20/2020</div>
-                    </div>
-                    <div className="space-y-2" >
+                    {
+                        Object.entries(meassagesList).map(([date, messages]) => (
+                            <>
 
-                        {
-                            meassagesList.map((message, index) => (
-                                message.senderId === loggedInUser.id ? (
-                                    <div key={message.id} className='flex justify-end items-center h-full'>
-                                        <div className='bg-primary text-white rounded-lg rounded-br-none p-3'>
-                                            <div className='text-sm'>{message.text}</div>
-                                            <div className="flex items-center justify-end mt-3 gap-[4px]">
-                                                <div className='text-xs text-gray-300'>
-                                                    {
-                                                        moment(message.createdAt).format('hh:mm')
-                                                    }
-                                                </div>
-                                                <div className='-mt-2'>.</div>
-                                                <div className='text-xs text-gray-300'>
-                                                    {
-                                                        message?.read ? 'read' : 'sent'
-                                                    }
-                                                </div>
-
-                                            </div>
-
-                                        </div>
+                                <div className='flex justify-center items-center'>
+                                    <div className='text-gray-500 text-sm'>
+                                        {
+                                            moment(date, 'DD/MM/YYYY').isSame(moment(), 'day') ? 'Today' : moment(date, 'DD/MM/YYYY').isSame(moment().subtract(1, 'days'), 'day') ? 'Yesterday' : moment(date, 'DD/MM/YYYY').isSame(moment(), 'week') ? moment(date, 'DD/MM/YYYY').format('dddd') : date
+                                        }
                                     </div>
-                                ) : (
-                                    <div key={message.id} className='flex justify-start items-center h-full'>
-                                        <div className='bg-gray-100 text-black rounded-lg rounded-tl-none p-3'>
-                                            <div className='text-sm'>{message.text}</div>
-                                            <div className='text-xs text-gray-500 mt-3'>
-                                                {
-                                                    moment(message.createdAt).format('hh:mm')
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                )))
-                        }
-                    </div>
+                                </div>
+                                <div className="space-y-2" >
+
+                                    {
+                                        messages.map((message, index) => (
+                                            message.senderId === loggedInUser.id ? (
+                                                <div key={message.id} className='flex justify-end items-center h-full'>
+                                                    <div className='bg-primary text-white rounded-lg rounded-br-none p-3'>
+                                                        <div className='text-sm'>{message.text}</div>
+                                                        <div className="flex items-center justify-end mt-3 gap-[4px]">
+                                                            <div className='text-xs text-gray-300'>
+                                                                {
+                                                                    moment(message.createdAt).format('hh:mm a')
+                                                                }
+                                                            </div>
+                                                            <div className='-mt-2'>.</div>
+                                                            <div className='text-xs text-gray-300'>
+                                                                {
+                                                                    message?.read ? 'read' : 'sent'
+                                                                }
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div key={message.id} className='flex justify-start items-center h-full'>
+                                                    <div className='bg-gray-100 text-black rounded-lg rounded-tl-none p-3'>
+                                                        <div className='text-sm'>{message.text}</div>
+                                                        <div className='text-xs text-gray-500 mt-3'>
+                                                            {
+                                                                moment(message.createdAt).format('hh:mm a')
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )))
+                                    }
+                                </div>
+                            </>
+                        ))
+                    }
                 </div>
 
                 <ClickAwayListener onClickAway={() => {
                     setShowAttach(false)
                     setShowEmoji(false)
                 }}>
-                    <div className='rounded-xl bg-gray-100 p-7 flex gap-3 relative mt-5'>
+                    <div className='rounded-xl bg-gray-100 p-3 sm:p-7 flex gap-3 relative mt-5'>
                         <>
 
                             {
@@ -146,7 +176,7 @@ const RightSide = ({ filteredMessages }) => {
                             }
                         </>
 
-                        <Avatar className='mt-1' sx={{ background: '#D1D5DB', color: '#6B7280' }} onClick={() => {
+                        <Avatar className='mt-1' sx={{ background: '#D1D5DB', color: '#6B7280', width: 35, height: 35 }} onClick={() => {
                             setShowEmoji(false)
                             setShowAttach(!showAttach)
                         }}>
