@@ -85,7 +85,7 @@ const RightSide = ({ filteredMessages }) => {
         <div className='bg-white rounded-lg '>
             <MessageHeader />
             <div className='sm:p-10 p-1'>
-                <div className='h-[500px] overflow-auto px-2' id="msg-body">
+                <div className='h-[400px] overflow-auto px-2' id="msg-body">
                     {
                         Object.entries(meassagesList).map(([date, messages]) => (
                             <>

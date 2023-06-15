@@ -19,6 +19,17 @@ model User {
     lastSeen         DateTime?
     pinnedBy         PinnedUser[] @relation("PinnedBy")
     pinned           PinnedUser[] @relation("Pinned")
+    groups           Group[]      @relation("GroupUsers")
+}
+
+model Group {
+    id        Int       @id @default(autoincrement())
+    name      String
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    messages  Message[] @relation("GroupMessages")
+    userId    Int
+    users     User[]    @relation("GroupUsers", fields: [userId], references: [id])
 }
 
 model Message {
@@ -32,6 +43,9 @@ model Message {
     receiverId Int
     receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
     read       Boolean  @default(false)
+    groupId    Int?
+    group      Group?   @relation("GroupMessages", fields: [groupId], references: [id])
+    admin      Boolean  @default(false)
 }
 
 model PinnedUser {

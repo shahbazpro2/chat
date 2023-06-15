@@ -3,6 +3,10 @@ import React, { useEffect, useState } from 'react'
 import ChatItem from './components/ChatItem'
 import { activeUserAtom, pinnedUserAtom, setActiveUserAtom } from '@jotai/chat'
 import { useAtom } from 'jotai'
+import AddIcon from '@mui/icons-material/Add';
+import { useModalState, useSetModal } from '@jotai/modal';
+import UserListModal from './components/UserListModal';
+import { modalKeys } from '@common/modals/modalKeys';
 
 
 const LeftSide = ({ users, filteredMessages, setActiveClick }) => {
@@ -12,6 +16,8 @@ const LeftSide = ({ users, filteredMessages, setActiveClick }) => {
     const [searchUsers, setSearchUsers] = useState([])
     const [pinnedUsers] = useAtom(pinnedUserAtom)
     const [unpinnedUsers, setUnpinnedUsers] = useState([])
+    const openCloseModal = useSetModal()
+    const modalVal = useModalState(modalKeys.userlist)
 
 
     useEffect(() => {
@@ -43,7 +49,7 @@ const LeftSide = ({ users, filteredMessages, setActiveClick }) => {
     }
 
     return (
-        <div className='bg-white rounded-lg py-10'>
+        <div className='bg-white rounded-lg py-10 min-h-[75vh] relative'>
             <div className="pb-2">
                 <div className="text-lg font-semibold uppercase px-10">Messages</div>
                 {
@@ -78,7 +84,18 @@ const LeftSide = ({ users, filteredMessages, setActiveClick }) => {
                     ))
                 }
             </ul>
-
+            <div className="absolute bottom-5 right-5">
+                <div className="bg-primary rounded-full p-3 cursor-pointer">
+                    <AddIcon className='text-white' onClick={() => openCloseModal({
+                        key: modalKeys.userlist,
+                        status: true,
+                    })} />
+                </div>
+            </div>
+            {
+                modalVal?.status &&
+                <UserListModal />
+            }
         </div>
     )
 }
