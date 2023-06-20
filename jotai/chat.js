@@ -3,8 +3,17 @@
 import { atom } from "jotai";
 
 export const activeUserAtom = atom(null);
+export const activeGroupAtom = atom(null);
 export const loggedInUserAtom = atom(null);
 export const pinnedUserAtom = atom(null);
+
+//set active group
+export const setActiveGroupAtom = atom(
+    null,
+    (get, set, activeGroup) => {
+        set(activeGroupAtom, activeGroup);
+    }
+);
 
 //set active user
 export const setActiveUserAtom = atom(
@@ -32,7 +41,7 @@ export const setPinnedUsersAtom = atom(
             return;
         }
         const filterExisting = pinnedUsers.filter(user => {
-            const index = existing?.findIndex(item => item?.pinned?.id === user?.pinned?.id);
+            const index = existing?.findIndex(item => item?.pinnedId === user?.pinnedId);
             return index === -1;
         });
 
@@ -47,7 +56,7 @@ export const setPinnedUserAtom = atom(
     (get, set, pinnedUser) => {
         const users = get(pinnedUserAtom);
         if (users) {
-            const index = users.findIndex(user => user.id === pinnedUser.id);
+            const index = users.findIndex(user => user.pinnedId === pinnedUser.pinnedId);
             if (index === -1) {
                 set(pinnedUserAtom, [...users, pinnedUser]);
             }
@@ -62,7 +71,7 @@ export const removePinnedUserAtom = atom(
     (get, set, pinnedUser) => {
         const users = get(pinnedUserAtom);
         if (users) {
-            const index = users.findIndex(user => user.id === pinnedUser.id);
+            const index = users.findIndex(user => user.pinnedId === pinnedUser.pinnedId);
             if (index !== -1) {
                 users.splice(index, 1);
                 set(pinnedUserAtom, [...users]);

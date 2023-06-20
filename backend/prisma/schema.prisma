@@ -8,28 +8,36 @@ generator client {
 }
 
 model User {
-    id               Int          @id @default(autoincrement())
+    id               Int       @id @default(autoincrement())
     name             String
-    email            String       @unique
-    createdAt        DateTime     @default(now())
-    updatedAt        DateTime     @updatedAt
-    sentMessages     Message[]    @relation("Sender")
-    receivedMessages Message[]    @relation("Receiver")
-    online           Boolean      @default(false)
+    email            String    @unique
+    createdAt        DateTime  @default(now())
+    updatedAt        DateTime  @updatedAt
+    sentMessages     Message[] @relation("Sender")
+    receivedMessages Message[] @relation("Receiver")
+    online           Boolean   @default(false)
     lastSeen         DateTime?
-    pinnedBy         PinnedUser[] @relation("PinnedBy")
-    pinned           PinnedUser[] @relation("Pinned")
-    groups           Group[]      @relation("GroupUsers")
+    groups           Group[]
+    singleChats      Chat[]
+    pinned           Pinned[]
 }
 
 model Group {
     id        Int       @id @default(autoincrement())
-    name      String
+    title     String
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
     messages  Message[] @relation("GroupMessages")
-    userId    Int
-    users     User[]    @relation("GroupUsers", fields: [userId], references: [id])
+    members   User[]
+}
+
+model Chat {
+    id        Int       @id @default(autoincrement())
+    members   User[]
+    messages  Message[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    pinned    Pinned[]
 }
 
 model Message {
@@ -40,20 +48,21 @@ model Message {
     updatedAt  DateTime @updatedAt
     senderId   Int
     sender     User     @relation("Sender", fields: [senderId], references: [id])
-    receiverId Int
-    receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
+    receiverId Int?
+    receiver   User?    @relation("Receiver", fields: [receiverId], references: [id])
     read       Boolean  @default(false)
     groupId    Int?
     group      Group?   @relation("GroupMessages", fields: [groupId], references: [id])
-    admin      Boolean  @default(false)
+    chatId     Int?
+    chat       Chat?    @relation(fields: [chatId], references: [id])
 }
 
-model PinnedUser {
+model Pinned {
     id         Int      @id @default(autoincrement())
     createdAt  DateTime @default(now())
     updatedAt  DateTime @updatedAt
     pinnedById Int
-    pinnedBy   User     @relation("Pinned", fields: [pinnedById], references: [id])
-    pinnedId   Int
-    pinned     User     @relation("PinnedBy", fields: [pinnedId], references: [id])
+    pinnedBy   User     @relation(fields: [pinnedById], references: [id])
+    chatId     Int
+    chat       Chat     @relation(fields: [chatId], references: [id])
 }

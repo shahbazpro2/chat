@@ -4,10 +4,11 @@ import React, { useEffect, useRef, useState } from 'react'
 import LeftSide from './LeftSide'
 import RightSide from './RightSide'
 import { useAtom, useSetAtom } from 'jotai'
-import { activeUserAtom, loggedInUserAtom, pinnedUserAtom, setActiveUserAtom, setLoggedInUserAtom, setPinnedUserAtom, setPinnedUsersAtom } from '@jotai/chat'
+import { activeGroupAtom, activeUserAtom, loggedInUserAtom, pinnedUserAtom, setActiveUserAtom, setLoggedInUserAtom, setPinnedUserAtom, setPinnedUsersAtom } from '@jotai/chat'
 import axios from 'axios'
 import { Button } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import GroupRightSide from './GroupRightSide'
 
 const Chat = () => {
     const ref = useRef(true)
@@ -16,9 +17,57 @@ const Chat = () => {
     const [loggedInUser] = useAtom(loggedInUserAtom)
     const setLoggedInUser = useSetAtom(setLoggedInUserAtom)
     const setPinnedUsers = useSetAtom(setPinnedUsersAtom)
+    const [activeGroup] = useAtom(activeGroupAtom)
     const [messages, setMessages] = useState([])
+    const [groupMessages, setGroupMessages] = useState([])
     const [users, setUsers] = useState([])
     const [activeClick, setActiveClick] = useState(false)
+    const [activeGroupClick, setActiveGroupClick] = useState(false)
+    const [groups, setGroups] = useState([])
+    const firstMountRef = useRef(true)
+
+    useEffect(() => {
+        let groupInterval
+        if (loggedInUser?.id) {
+            groupInterval = setInterval(() => {
+                axios.get(`/api/group?id=${loggedInUser?.id}`).then(res => {
+                    setGroups(res.data)
+                })
+                    .catch(err => {
+                        console.log(err)
+                    })
+                axios.get(`/api/chat?id=${loggedInUser?.id}`).then(res => {
+                    console.log('users', res.data)
+                    let usersData = {}
+                    res.data?.forEach(chat => {
+                        chat?.members.forEach(member => {
+                            if (member.id !== loggedInUser?.id) {
+                                if (!usersData[chat.id]) usersData[chat.id] = {
+                                    chatId: chat.id,
+                                    ...member
+                                }
+                            }
+                        })
+                    })
+                    const usersList = Object.values(usersData)
+                    setUsers(usersList)
+                    /* if (activeUser || activeClick || !usersList.length || !firstMountRef) return
+                    setActiveUser(usersList?.[0])
+                    setActiveClick(true)
+                    firstMountRef.current = false */
+                })
+                    .catch(err => {
+                        console.log(err)
+                    })
+            }, 3000)
+
+        }
+
+        return () => {
+            clearInterval(groupInterval)
+        }
+    }, [loggedInUser, activeUser, activeClick])
+
     useEffect(() => {
         const handleBeforeUnload = async () => {
             localStorage.getItem('userId')
@@ -41,20 +90,21 @@ const Chat = () => {
     useEffect(() => {
         if (!loggedInUser) return
         const messageInterval = setInterval(() => {
-            getMessages(loggedInUser?.id)
+            getMessages(users)
+            getGroupMessages(groups)
             if (!activeUser || !activeClick) return
-            axios.get(`/api/users/${activeUser?.id}`)
-                .then(res => {
-                    setActiveUser(res.data)
-                })
-                .catch(err => console.log(err))
-        }, 3000)
+            /*   axios.get(`/api/users/${activeUser?.id}`)
+                  .then(res => {
+                      setActiveUser(res.data)
+                  })
+                  .catch(err => console.log(err)) */
+        }, 1000)
 
         return () => {
             clearInterval(messageInterval)
         }
 
-    }, [loggedInUser, activeClick])
+    }, [loggedInUser, activeClick, groups, users])
 
 
     useEffect(() => {
@@ -68,14 +118,10 @@ const Chat = () => {
                         setLoggedInUser(res.data)
                     })
                     .catch(err => console.log(err))
-                axios.get(`/api/users/pinned?id=${promptUser}`)
+                axios.get(`/api/chat/pinned?id=${promptUser}`)
                     .then(res => {
                         setPinnedUsers(res.data)
                     })
-
-
-                getMessages(promptUser)
-
             })
             .catch(err => console.log(err))
 
@@ -84,27 +130,46 @@ const Chat = () => {
         }
     }, [])
 
-    const getMessages = (id) => {
-        axios.get(`/api/messages?user=${id}`)
-            .then(msgs => {
-                setMessages(msgs.data)
-                let users = {}
-                msgs.data.forEach(msg => {
-                    if (!users[msg.senderId] && msg.senderId !== Number(id)) {
-                        users[msg.senderId] = msg.sender
-                    }
+    const getMessages = (users) => {
+        if (users.length) {
+
+            axios.get(`/api/messages/?ids=${users.map(user => user.chatId).join(',')}`)
+                .then(msgs => {
+                    console.log('mmmmsgs', msgs.data)
+                    setMessages(msgs.data)
                 })
-                setUsers(Object.values(users))
-            })
-            .catch(err => console.log(err))
+                .catch(err => console.log(err))
+        }
+    }
+
+    const getGroupMessages = (groups) => {
+        console.log('groups', groups)
+        if (groups.length) {
+            axios.get(`/api/messages/group?ids=${groups.map(group => group.id).join(',')}`)
+                .then(msgs => {
+                    setGroupMessages(msgs.data)
+                })
+                .catch(err => console.log(err))
+        }
     }
 
     const onBackClick = () => {
         setActiveClick(false)
+        setActiveGroupClick(false)
         setActiveUser(null)
     }
 
+    const onSetActiveClick = () => {
+        setActiveClick(true)
+        setActiveGroupClick(false)
+    }
 
+    const onGroupActiveClick = () => {
+        setActiveClick(false)
+        setActiveGroupClick(true)
+    }
+
+    console.log('ggg', messages[activeUser?.chatId], activeUser?.chatId)
 
     return (
         <div>
@@ -112,18 +177,22 @@ const Chat = () => {
             <div className="grid grid-cols-12 gap-2 xl:gap-7 p-3 sm:p-5 2xl:p-16" >
                 <div className="col-span-12 block xl:hidden">
                     {
-                        activeClick ?
+                        activeClick || activeGroupClick ?
                             <Button disableElevation variant="text" sx={{ fontSize: 18, fontWeight: 500 }} startIcon={<ArrowBackIcon />} onClick={onBackClick} >Users</Button> :
-                            <LeftSide users={users} filteredMessages={messages} setActiveClick={setActiveClick} />
+                            <LeftSide users={users} groups={groups} groupMessages={groupMessages} filteredMessages={messages} setActiveClick={onSetActiveClick} onGroupActiveClick={onGroupActiveClick} />
                     }
                 </div>
                 <div className="xl:col-span-4 2xl:col-span-3 hidden xl:block">
-                    <LeftSide users={users} filteredMessages={messages} setActiveClick={setActiveClick} />
+                    <LeftSide users={users} groups={groups} groupMessages={groupMessages} filteredMessages={messages} setActiveClick={onSetActiveClick} onGroupActiveClick={onGroupActiveClick} />
                 </div>
                 <div className="xl:col-span-8 2xl:col-span-9 col-span-12">
                     {
                         activeClick &&
-                        <RightSide filteredMessages={messages} />
+                        <RightSide filteredMessages={messages?.[activeUser?.chatId] || []} />
+                    }
+                    {
+                        activeGroupClick &&
+                        <GroupRightSide messages={groupMessages?.[activeGroup?.id] || []} />
                     }
                 </div>
             </div>

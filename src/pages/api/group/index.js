@@ -4,36 +4,35 @@ const prisma = new PrismaClient()
 export default async function handler(req, res) {
     switch (req.method) {
         case 'POST':
-            const { name, members, adminId } = req.body;
+            const { title, members } = req.body;
             const newGroup = await prisma.group.create({
                 data: {
-                    name,
-                    adminId,
+                    title,
                     members: {
-                        connect: members
+                        connect: members.map(member => ({ id: member }))
                     }
-                }
-            });
-            return res.status(201).json(newGroup);
-        case 'GET':
-            const { user } = req.query;
-            //get all messages and filter using createdAt
-            const groups = await prisma.group.findMany({
-                orderBy: {
-                    createdAt: 'asc'
                 },
                 include: {
                     members: true
-                },
+                }
+            })
+
+            return res.status(200).json(newGroup);
+        case 'GET':
+            const { id } = req.query;
+            const group = await prisma.group.findMany({
                 where: {
                     members: {
                         some: {
-                            id: Number(user)
+                            id: Number(id)
                         }
                     }
+                },
+                include: {
+                    members: true
                 }
             })
-            return res.status(200).json(groups);
+            return res.status(200).json(group);
         default:
             return res.status(405).json({ message: 'Method not allowed' });
     }

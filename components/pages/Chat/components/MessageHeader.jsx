@@ -17,38 +17,42 @@ const MessageHeader = () => {
     const setPinUser = useSetAtom(setPinnedUserAtom)
     const removePinUser = useSetAtom(removePinnedUserAtom)
     const [pinnedUsers] = useAtom(pinnedUserAtom)
+    const setActiveUser = useSetAtom(activeUserAtom)
 
     const onPinClick = (popupState) => {
-        if (isActiveUserPinned?.id) {
-            axios.delete(`/api/users/pinned?id=${isActiveUserPinned?.id}`).then(res => {
-                removePinUser(isActiveUserPinned)
+        if (activeUser?.pinnedId) {
+            axios.delete(`/api/chat/pinned?id=${activeUser?.pinnedId}`).then(res => {
+                removePinUser(activeUser)
+                setActiveUser({ ...activeUser, pinnedId: null })
             })
             return
         }
-        axios.post('/api/users/pinned', {
+        axios.post('/api/chat/pinned', {
             pinnedById: loggedInUser.id,
-            pinnedId: activeUser.id
+            chatId: activeUser.chatId
         }).then(res => {
             setPinUser(res.data)
+            setActiveUser(res.data)
         })
 
         popupState.close()
     }
-    const isActiveUserPinned = pinnedUsers?.filter(p => p?.pinned?.id === activeUser?.id)?.[0]
+
+    console.log('activeuser', pinnedUsers)
 
     return (
         <>
             <div className='shadow-sm rounded-lg rounded-bl-none rounded-br-none'>
                 <div className='grid grid-cols-3 p-5 '>
                     <div>
-                        <Avatar alt="Travis Howard" />
+                        <Avatar alt={activeUser?.name} src='/test' />
                     </div>
                     <div className='text-center'>
                         <div className="font-semibold capitalize">{activeUser?.name}</div>
                         <div className="text-gray-500 text-sm">
                             {/*Active 3m ago*/}
                             {
-                                activeUser?.online ? 'Online' : moment(activeUser?.lastSeen).fromNow()
+                                activeUser?.online ? 'Online' : activeUser?.lastSeen ? moment(activeUser?.lastSeen).fromNow() : 'Offline'
                             }
                         </div>
                     </div>
@@ -66,7 +70,7 @@ const MessageHeader = () => {
                                             horizontal: 'right',
                                         }}>
                                         <MenuItem onClick={() => onPinClick(popupState)}>
-                                            <PushPinOutlinedIcon className='rotate-45' />&nbsp; {isActiveUserPinned ? 'Unpin Chat' : 'Pin Chat'}
+                                            <PushPinOutlinedIcon className='rotate-45' />&nbsp; {activeUser?.pinnedId ? 'Unpin Chat' : 'Pin Chat'}
                                         </MenuItem>
                                         {/*  <MenuItem onClick={popupState.close}>
                                             <VolumeOffOutlinedIcon />&nbsp; Mute Chat

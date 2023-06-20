@@ -9,21 +9,21 @@ import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
 import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
-import { useAtom, useSetAtom } from 'jotai';
-import { activeUserAtom, loggedInUserAtom, setActiveUserAtom } from '@jotai/chat';
+import { useAtom } from 'jotai';
+import { activeGroupAtom, activeUserAtom, loggedInUserAtom } from '@jotai/chat';
 import axios from 'axios';
 import moment from 'moment/moment';
 import { dateTimeShow } from '../../../utils/dateTimeshow';
+import GroupMessageHeader from './components/GroupMessageHeader';
 
-const RightSide = ({ filteredMessages }) => {
+const GroupRightSide = ({ messages }) => {
     const [value, setValue] = useState('');
     const [showAttach, setShowAttach] = useState(false);
     const [showEmoji, setShowEmoji] = useState(false);
     const [loggedInUser] = useAtom(loggedInUserAtom)
-    const [activeUser] = useAtom(activeUserAtom)
-    const oldMessages = useRef(filteredMessages?.length)
+    const [activeGroup] = useAtom(activeGroupAtom)
+    const oldMessages = useRef(messages?.length)
     const [meassagesList, setMeassagesList] = useState({})
-    const setActiveUser = useSetAtom(setActiveUserAtom)
 
     useEffect(() => {
         document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
@@ -31,23 +31,21 @@ const RightSide = ({ filteredMessages }) => {
 
 
     useEffect(() => {
-        if (!activeUser) return
+        if (!activeGroup) return
         const datewiseMessages = {}
-        filteredMessages.forEach((message) => {
-            if (message.senderId === activeUser.id || message.receiverId === activeUser.id) {
-                const date = moment(message.createdAt).format('DD/MM/YYYY')
-                if (datewiseMessages[date]) {
-                    datewiseMessages[date].push(message)
-                } else {
-                    datewiseMessages[date] = [message]
-                }
+        messages?.forEach((message) => {
+            const date = moment(message.createdAt).format('DD/MM/YYYY')
+            if (datewiseMessages[date]) {
+                datewiseMessages[date].push(message)
+            } else {
+                datewiseMessages[date] = [message]
             }
         })
         setMeassagesList(datewiseMessages)
-        if (oldMessages.current < filteredMessages.length) {
+        if (oldMessages?.current < messages?.length) {
             const scroll = setTimeout(() => {
                 document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
-                oldMessages.current = filteredMessages.length
+                oldMessages.current = messages.length
             }, 1000)
         }
 
@@ -55,32 +53,19 @@ const RightSide = ({ filteredMessages }) => {
             clearTimeout(scroll)
         })
 
-    }, [activeUser, filteredMessages])
+    }, [activeGroup, messages])
 
     const handleSendMessage = (e) => {
         e.preventDefault()
         if (!value) return
         //smooth scroll to bottom
         document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
-        axios.post('/api/messages', {
+        axios.post('/api/messages/group/', {
             senderId: loggedInUser.id,
-            receiverId: activeUser.id,
-            chatId: activeUser.chatId,
+            groupId: activeGroup.id,
             text: value
         }).then(res => {
             setValue('')
-            if (!activeUser.chatId) {
-                setActiveUser({ ...activeUser, chatId: res.data.chatId })
-            }
-        }).catch(err => {
-            console.log(err)
-        })
-    }
-
-    const onFocusBlur = () => {
-        axios.post('/api/messages/read', {
-            senderId: activeUser.id,
-            receiverId: loggedInUser.id
         }).catch(err => {
             console.log(err)
         })
@@ -89,7 +74,7 @@ const RightSide = ({ filteredMessages }) => {
 
     return (
         <div className='bg-white rounded-lg '>
-            <MessageHeader />
+            <GroupMessageHeader />
             <div className='sm:p-10 p-1'>
                 <div className='h-[400px] overflow-auto px-2' id="msg-body">
                     {
@@ -131,7 +116,12 @@ const RightSide = ({ filteredMessages }) => {
                                             ) : (
                                                 <div key={message.id} className='flex justify-start items-center h-full'>
                                                     <div className='bg-gray-100 text-black rounded-lg rounded-tl-none p-3'>
-                                                        <div className='text-sm'>{message.text}</div>
+                                                        <div className='text-sm font-bold flex items-center gap-1'>
+                                                            <Avatar className='w-5 h-5 text-sm' sx={{ background: '#D1D5DB', color: '#6B7280' }}>
+                                                                {message.sender?.name[0]}
+                                                            </Avatar>
+                                                            {message.sender?.name}</div>
+                                                        <div className='text-sm mt-3'>{message.text}</div>
                                                         <div className='text-xs text-gray-500 mt-3'>
                                                             {
                                                                 moment(message.createdAt).format('hh:mm a')
@@ -193,8 +183,6 @@ const RightSide = ({ filteredMessages }) => {
                             fullWidth
                             multiline
                             onChange={e => setValue(e.target.value)}
-                            onFocus={onFocusBlur}
-                            onBlur={onFocusBlur}
                         />
                         <div className="flex items-end">
                             <div className='bg-primary text-white rounded h-10 w-10 flex justify-center items-center mb-1 cursor-pointer' onClick={handleSendMessage}>
@@ -210,4 +198,4 @@ const RightSide = ({ filteredMessages }) => {
     )
 }
 
-export default RightSide
+export default GroupRightSide
