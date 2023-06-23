@@ -1,7 +1,7 @@
 import BasicModal from '@common/modals/BasicModal'
 import { modalKeys } from '@common/modals/modalKeys'
 import { activeUserAtom, loggedInUserAtom, setActiveUserAtom } from '@jotai/chat'
-import { useSetModal } from '@jotai/modal'
+import { useModalState, useSetModal } from '@jotai/modal'
 import { Button, Checkbox, Divider, FormControlLabel, TextField } from '@mui/material'
 import axios from 'axios'
 import { useAtom, useSetAtom } from 'jotai'
@@ -9,21 +9,32 @@ import React, { memo, useEffect, useState } from 'react'
 import MessageIcon from '@mui/icons-material/Message';
 
 const UserListModal = ({ onActiveClick }) => {
+    const [allUsers, setAllUsers] = useState([])
     const [users, setUsers] = useState([])
     const [isSelecting, setIsSelecting] = useState(true)
     const [selectedUsers, setSelectedUsers] = useState([])
     const [title, setTitle] = useState('')
     const openCloseModal = useSetModal()
+    const [search, setSearch] = useState('')
     const [loggedInUser] = useAtom(loggedInUserAtom)
+    const modalVal = useModalState(modalKeys.userlist)
 
     useEffect(() => {
-        axios.get('/api/users').then(res => {
-            setUsers(res.data)
-        })
-            .catch(err => {
-                console.log(err)
+        //serach users
+        const filteredUsers = allUsers.filter(u => u.name.toLowerCase().includes(search.toLowerCase()))
+        setUsers(filteredUsers)
+    }, [search])
+
+    useEffect(() => {
+        if (modalVal?.status)
+            axios.get('/api/users').then(res => {
+                setUsers(res.data)
+                setAllUsers(res.data)
             })
-    }, [])
+                .catch(err => {
+                    console.log(err)
+                })
+    }, [modalVal])
 
     const onChange = (e, id) => {
         const alreadySelected = selectedUsers.includes(id)
@@ -65,9 +76,10 @@ const UserListModal = ({ onActiveClick }) => {
     const onSingleMessage = (user) => {
         openCloseModal({
             key: modalKeys.userlist,
-            status: false
+            status: false,
+            data: null
         })
-        onActiveClick(user)
+        onActiveClick(user, modalVal?.data)
     }
 
 
@@ -85,28 +97,36 @@ const UserListModal = ({ onActiveClick }) => {
                     }
 
                 </div>
+                <div className="my-5  flex items-center relative">
+                    <input type="text" value={search} placeholder='Search' className='bg-gray-100 pl-5 pr-12 py-3 w-full' onChange={e => setSearch(e.target.value)} />
 
-                {
-                    users.map(u => (
-                        u.id !== loggedInUser?.id &&
-                        <>
-                            <div key={u.id} className="flex items-start bg-gray-100 py-2 px-3">
-                                {
-                                    isSelecting &&
-                                    <Checkbox size='small' checked={selectedUsers.includes(u.id)} onChange={(e) => onChange(e, u.id)} />
-                                }
-                                <div>
-                                    <div className='font-bold'>{u.name}</div>
-                                    <div>{u.email}</div>
-                                </div>
-                                <div className='ml-auto cursor-pointer' onClick={() => onSingleMessage(u)}>
-                                    <MessageIcon />
-                                </div>
-                            </div>
-                        </>
-                    ))
+                    <img src="/assets/search.png" alt="search" className='w-5 h-5 ml-2 absolute right-5' />
 
-                }
+                </div>
+                <div className="h-[40vh] overflow-y-auto">
+                    {
+                        users.map(u => (
+                            u.id !== loggedInUser?.id &&
+                            <>
+                                <div key={u.id} className="flex items-start bg-gray-100 py-2 px-3 my-3">
+                                    {
+                                        isSelecting &&
+                                        <Checkbox size='small' checked={selectedUsers.includes(u.id)} onChange={(e) => onChange(e, u.id)} />
+                                    }
+                                    <div>
+                                        <div className='font-bold'>{u.name}</div>
+                                        <div>{u.email}</div>
+                                    </div>
+                                    <div className='ml-auto cursor-pointer' onClick={() => onSingleMessage(u)}>
+                                        <MessageIcon />
+                                    </div>
+                                </div>
+                            </>
+                        ))
+
+                    }
+                </div>
+
             </div>
         </BasicModal>
     )

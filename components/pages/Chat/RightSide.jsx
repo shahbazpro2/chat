@@ -1,29 +1,26 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable react/no-unescaped-entities */
 import React, { useEffect, useRef, useState } from 'react'
 import MessageHeader from './components/MessageHeader'
-import { Avatar, ClickAwayListener, TextField } from '@mui/material'
-import SendIcon from '@mui/icons-material/Send';
-import AddIcon from '@mui/icons-material/Add';
-import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
-import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
-import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
-import data from '@emoji-mart/data'
-import Picker from '@emoji-mart/react'
 import { useAtom, useSetAtom } from 'jotai';
 import { activeUserAtom, loggedInUserAtom, setActiveUserAtom } from '@jotai/chat';
 import axios from 'axios';
 import moment from 'moment/moment';
 import { dateTimeShow } from '../../../utils/dateTimeshow';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import Zoom from 'react-medium-image-zoom'
+import 'react-medium-image-zoom/dist/styles.css'
+import MessageSend from './components/MessageSend';
 
 const RightSide = ({ filteredMessages }) => {
-    const [value, setValue] = useState('');
-    const [showAttach, setShowAttach] = useState(false);
-    const [showEmoji, setShowEmoji] = useState(false);
     const [loggedInUser] = useAtom(loggedInUserAtom)
     const [activeUser] = useAtom(activeUserAtom)
     const oldMessages = useRef(filteredMessages?.length)
     const [meassagesList, setMeassagesList] = useState({})
     const setActiveUser = useSetAtom(setActiveUserAtom)
+    const [fileUploading, setFileUploading] = useState(false)
+    const [picUploading, setPicUploading] = useState(false)
+    const [messageSent, setMessageSent] = useState(false)
 
     useEffect(() => {
         document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
@@ -57,35 +54,77 @@ const RightSide = ({ filteredMessages }) => {
 
     }, [activeUser, filteredMessages])
 
-    const handleSendMessage = (e) => {
-        e.preventDefault()
+    const handleSendMessage = (value) => {
         if (!value) return
+        const formData = new FormData()
+        formData.append('senderId', loggedInUser.id)
+        formData.append('receiverId', activeUser.id)
+        formData.append('chatId', activeUser.chatId)
+        formData.append('text', value)
+
         //smooth scroll to bottom
         document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
-        axios.post('/api/messages', {
-            senderId: loggedInUser.id,
-            receiverId: activeUser.id,
-            chatId: activeUser.chatId,
-            text: value
-        }).then(res => {
-            setValue('')
+        axios.post('/api/messages', formData).then(res => {
+            setMessageSent(true)
             if (!activeUser.chatId) {
                 setActiveUser({ ...activeUser, chatId: res.data.chatId })
             }
         }).catch(err => {
             console.log(err)
         })
+
     }
 
-    const onFocusBlur = () => {
-        axios.post('/api/messages/read', {
-            senderId: activeUser.id,
-            receiverId: loggedInUser.id
+    const onAttachUpload = (e, type) => {
+        const file = e.target.files[0]
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('senderId', loggedInUser.id)
+        formData.append('receiverId', activeUser.id)
+        formData.append('chatId', activeUser.chatId)
+        type === 'file' ?
+            setFileUploading(true) : setPicUploading(true)
+        axios.post('/api/messages', formData).then(res => {
+            if (!activeUser.chatId) {
+                setActiveUser({ ...activeUser, chatId: res.data.chatId })
+            }
         }).catch(err => {
             console.log(err)
+        }).finally(() => {
+            setPicUploading(false)
+            setFileUploading(false)
+            setMessageSent(true)
         })
     }
 
+    const onDownload = (file) => {
+        window.open(file)
+    }
+
+    const renderFile = (file) => {
+        if (!file) return
+        const ext = file.split('.').pop()
+        const allImagesExt = ['jpg', 'png', 'jpeg', 'gif']
+        const allVideosExt = ['mp4', 'mkv', 'avi', 'webm']
+
+        if (allImagesExt.includes(ext)) {
+            return <Zoom>
+                <img src={file} alt={file} className='w-[150px] object-cover' />
+
+            </Zoom>
+        } else if (allVideosExt.includes(ext)) {
+            return <video src={file} controls className='w-full h-full object-cover' />
+        } else {
+            return <div className='cursor-pointer'>
+                <InsertDriveFileIcon className='w-[50px] h-full object-cover' onClick={() => onDownload(file)} />
+                <div className="text-sm">
+                    {
+                        file.split('/').pop()?.split('-').pop()
+                    }
+                </div>
+            </div>
+        }
+    }
 
     return (
         <div className='bg-white rounded-lg '>
@@ -110,6 +149,7 @@ const RightSide = ({ filteredMessages }) => {
                                             message.senderId === loggedInUser.id ? (
                                                 <div key={message.id} className='flex justify-end items-center h-full'>
                                                     <div className='bg-primary text-white rounded-lg rounded-br-none p-3'>
+                                                        <div>{renderFile(message?.file)}</div>
                                                         <div className='text-sm'>{message.text}</div>
                                                         <div className="flex items-center justify-end mt-3 gap-[4px]">
                                                             <div className='text-xs text-gray-300'>
@@ -131,6 +171,7 @@ const RightSide = ({ filteredMessages }) => {
                                             ) : (
                                                 <div key={message.id} className='flex justify-start items-center h-full'>
                                                     <div className='bg-gray-100 text-black rounded-lg rounded-tl-none p-3'>
+                                                        <div>{renderFile(message?.file)}</div>
                                                         <div className='text-sm'>{message.text}</div>
                                                         <div className='text-xs text-gray-500 mt-3'>
                                                             {
@@ -147,63 +188,7 @@ const RightSide = ({ filteredMessages }) => {
                     }
                 </div>
 
-                <ClickAwayListener onClickAway={() => {
-                    setShowAttach(false)
-                    setShowEmoji(false)
-                }}>
-                    <div className='rounded-xl bg-gray-100 p-3 sm:p-7 flex gap-3 relative mt-5'>
-                        <>
-
-                            {
-                                showEmoji && <div className='absolute -top-[450px] left-0'>
-                                    <Picker data={data} onEmojiSelect={(emojiObject) => {
-                                        setValue(value + emojiObject.native)
-                                        setShowEmoji(false)
-                                    }} />
-                                </div>
-                            }
-                            {showAttach &&
-                                <div className='absolute space-y-3 -top-40 '>
-                                    <Avatar sx={{ background: '#D1D5DB', color: '#6B7280', cursor: 'pointer' }}>
-                                        <InsertPhotoOutlinedIcon />
-                                    </Avatar>
-                                    <Avatar sx={{ background: '#D1D5DB', color: '#6B7280', cursor: 'pointer' }}>
-                                        <AttachFileOutlinedIcon />
-                                    </Avatar>
-                                    <Avatar sx={{ background: '#D1D5DB', color: '#6B7280', cursor: 'pointer' }} onClick={
-                                        () => {
-                                            setShowEmoji(true)
-                                            setShowAttach(false)
-                                        }
-                                    } >
-                                        <SentimentSatisfiedAltOutlinedIcon />
-                                    </Avatar>
-                                </div>
-                            }
-                        </>
-
-                        <Avatar className='mt-1' sx={{ background: '#D1D5DB', color: '#6B7280', width: 35, height: 35 }} onClick={() => {
-                            setShowEmoji(false)
-                            setShowAttach(!showAttach)
-                        }}>
-                            <AddIcon sx={{ fontSize: 25, cursor: 'pointer' }} />
-                        </Avatar>
-                        <TextField
-                            value={value}
-                            fullWidth
-                            multiline
-                            onChange={e => setValue(e.target.value)}
-                            onFocus={onFocusBlur}
-                            onBlur={onFocusBlur}
-                        />
-                        <div className="flex items-end">
-                            <div className='bg-primary text-white rounded h-10 w-10 flex justify-center items-center mb-1 cursor-pointer' onClick={handleSendMessage}>
-                                <SendIcon />
-                            </div>
-                        </div>
-
-                    </div>
-                </ClickAwayListener>
+                <MessageSend handleSendMessage={handleSendMessage} onAttachUpload={onAttachUpload} picUploading={picUploading} fileUploading={fileUploading} messageSent={messageSent} setMessageSent={setMessageSent} />
             </div>
 
         </div >

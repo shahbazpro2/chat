@@ -1,5 +1,5 @@
 
-import { ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
 const { S3Client } = require("@aws-sdk/client-s3");
@@ -22,9 +22,10 @@ const upload = multer({
         bucket,
         s3,
 
+
         contentType: multerS3.AUTO_CONTENT_TYPE,
         key: function (req, file, cb) {
-            cb(null, Date.now().toString() + '-' + file.originalname);
+            cb(null, `public/${Date.now().toString()}-${file.originalname}`);
         }
     })
 })
@@ -70,14 +71,30 @@ export default async function handler(req, res) {
 
                 while (isTruncated) {
                     const { Contents, IsTruncated, NextContinuationToken } = await s3.send(command);
-                    const contentsList = Contents.map((c) => ` • ${c.Key}`).join("\n");
-                    contents += contentsList + "\n";
+                    const contentsList = Contents?.map((c) => ` • ${c.Key}`).join("\n");
+                    if (contentsList) {
+                        contents += contentsList + "\n";
+                        command.input.ContinuationToken = NextContinuationToken;
+                    }
                     isTruncated = IsTruncated;
-                    command.input.ContinuationToken = NextContinuationToken;
                 }
-                console.log(contents);
                 return res.status(200).json(contents);
 
+            } catch (err) {
+                console.error(err);
+            }
+            break;
+        case 'DELETE':
+            //get paramas
+            const { name } = req.query;
+            console.log('name', name)
+            const params = {
+                Bucket: bucket,
+                Key: name
+            };
+            try {
+                await s3.send(new DeleteObjectCommand(params));
+                return res.status(200).json({ message: 'File deleted successfully' });
             } catch (err) {
                 console.error(err);
             }

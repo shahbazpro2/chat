@@ -1,20 +1,54 @@
+import { upload } from '@backend/utils/awsS3';
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
+
+export const config = {
+    api: {
+        bodyParser: false,
+
+    },
+};
+
+const createMessage = async (req, res) => {
+    return new Promise((resolve, reject) => {
+        upload.single('file')(req, res, async (err) => {
+            const { text, senderId, groupId } = req.body || {};
+            if (!text && !req?.file?.location) {
+                reject('No text or file provided')
+                return
+            }
+            if (err) {
+                //failed to upload file
+                return reject(err);
+            }
+
+            if (Number(groupId)) {
+                resolve(await prisma.message.create({
+                    data: {
+                        text: text || '',
+                        file: req?.file?.location || null,
+                        senderId: Number(senderId),
+                        groupId: Number(groupId),
+                    }
+                }));
+
+            }
+
+        });
+    })
+
+}
 
 export default async function handler(req, res) {
     switch (req.method) {
         case 'POST':
-            const { text, senderId, groupId, file } = req.body;
 
-            const newMessage = await prisma.message.create({
-                data: {
-                    text,
-                    file,
-                    senderId,
-                    groupId
-                }
-            });
-            return res.status(201).json(newMessage);
+            try {
+                const message = await createMessage(req, res)
+                return res.status(200).json(message);
+            } catch (err) {
+                return res.status(500).json({ error: err })
+            }
         case 'GET':
             const { ids } = req.query;
             //split the ids into int and into an array
@@ -24,6 +58,9 @@ export default async function handler(req, res) {
                     groupId: {
                         in: groups
                     }
+                },
+                orderBy: {
+                    createdAt: 'asc'
                 },
                 include: {
                     sender: true

@@ -1,47 +1,80 @@
+import { upload } from '@backend/utils/awsS3';
 import { PrismaClient } from '@prisma/client'
+import formidable from 'formidable';
 const prisma = new PrismaClient()
 
-export default async function handler(req, res) {
-    switch (req.method) {
-        case 'POST':
-            const { text, senderId, receiverId, file, chatId } = req.body;
-            if (chatId) {
-                const message = await prisma.message.create({
+export const config = {
+    api: {
+        bodyParser: false,
+
+    },
+};
+
+const createMessage = async (req, res, newChatId) => {
+    return new Promise((resolve, reject) => {
+        upload.single('file')(req, res, async (err) => {
+            const { text, senderId, receiverId, chatId } = req.body || {};
+            if (!text && !req?.file?.location) {
+                reject('No text or file provided')
+                return
+            }
+            if (err) {
+                //failed to upload file
+                return reject(err);
+            }
+
+            if (Number(chatId)) {
+                resolve(await prisma.message.create({
                     data: {
-                        text,
-                        senderId,
-                        receiverId,
-                        chatId
+                        text: text || '',
+                        file: req?.file?.location || null,
+                        senderId: Number(senderId),
+                        receiverId: Number(receiverId),
+                        chatId: Number(chatId)
                     }
-                });
-                return res.status(200).json(message);
+                }));
+
             } else {
-                const crateSingleChat = await prisma.chat.create({
+                //create a new chat
+                const newChat = await prisma.chat.create({
                     data: {
                         members: {
                             connect: [
-                                { id: senderId },
-                                { id: receiverId }
+                                { id: Number(senderId) },
+                                { id: Number(receiverId) }
                             ]
                         }
                     }
                 });
-                const message = await prisma.message.create({
+                resolve(await prisma.message.create({
                     data: {
-                        text,
-                        file,
-                        senderId,
-                        receiverId,
-                        chatId: crateSingleChat.id
+                        text: text || '',
+                        file: req?.file?.location || null,
+                        senderId: Number(senderId),
+                        receiverId: Number(receiverId),
+                        chatId: newChat.id
                     }
-                });
-                return res.status(200).json(message);
+                }));
             }
 
+        });
+    })
+
+}
+
+export default async function handler(req, res) {
+    switch (req.method) {
+        case 'POST':
+            try {
+                const message = await createMessage(req, res)
+                return res.status(200).json(message);
+            } catch (err) {
+                return res.status(500).json({ error: err })
+            }
         case 'GET':
             const { ids } = req.query;
             //split the ids into int and into an array
-            const singleChats = ids.split(',').map(id => parseInt(id));
+            const singleChats = ids?.split(',').map(id => parseInt(id));
             //get all measseges according to single chats and sperate them according to the single chat id while querying
             const singleChat = await prisma.message.findMany({
 

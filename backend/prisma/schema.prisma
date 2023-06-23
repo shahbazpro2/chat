@@ -42,7 +42,7 @@ model Chat {
 
 model Message {
     id         Int      @id @default(autoincrement())
-    text       String
+    text       String?
     file       String?
     createdAt  DateTime @default(now())
     updatedAt  DateTime @updatedAt
@@ -64,5 +64,5 @@ model Pinned {
     pinnedById Int
     pinnedBy   User     @relation(fields: [pinnedById], references: [id])
     chatId     Int
-    chat       Chat     @relation(fields: [chatId], references: [id])
+    chat       Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
 }

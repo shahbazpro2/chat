@@ -4,11 +4,12 @@ import React, { useEffect, useRef, useState } from 'react'
 import LeftSide from './LeftSide'
 import RightSide from './RightSide'
 import { useAtom, useSetAtom } from 'jotai'
-import { activeGroupAtom, activeUserAtom, loggedInUserAtom, pinnedUserAtom, setActiveUserAtom, setLoggedInUserAtom, setPinnedUserAtom, setPinnedUsersAtom } from '@jotai/chat'
+import { activeGroupAtom, activeUserAtom, loggedInUserAtom, pinnedUserAtom, setActiveGroupAtom, setActiveUserAtom, setLoggedInUserAtom, setPinnedUserAtom, setPinnedUsersAtom } from '@jotai/chat'
 import axios from 'axios'
 import { Button } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import GroupRightSide from './GroupRightSide'
+import UserListModal from './components/UserListModal'
 
 const Chat = () => {
     const ref = useRef(true)
@@ -17,6 +18,7 @@ const Chat = () => {
     const [loggedInUser] = useAtom(loggedInUserAtom)
     const setLoggedInUser = useSetAtom(setLoggedInUserAtom)
     const setPinnedUsers = useSetAtom(setPinnedUsersAtom)
+    const setActiveGroup = useSetAtom(setActiveGroupAtom)
     const [activeGroup] = useAtom(activeGroupAtom)
     const [messages, setMessages] = useState([])
     const [groupMessages, setGroupMessages] = useState([])
@@ -24,6 +26,7 @@ const Chat = () => {
     const [activeClick, setActiveClick] = useState(false)
     const [activeGroupClick, setActiveGroupClick] = useState(false)
     const [groups, setGroups] = useState([])
+
     const firstMountRef = useRef(true)
 
     useEffect(() => {
@@ -159,9 +162,19 @@ const Chat = () => {
         setActiveUser(null)
     }
 
-    const onSetActiveClick = () => {
-        setActiveClick(true)
+    const onActiveClick = (user, searchUsers) => {
+        let chatId = user?.chatId || null
+        if (!user?.chatId) {
+            chatId = searchUsers.find(u => u.id === user.id)?.chatId
+
+        }
+        setActiveUser({
+            ...user,
+            chatId
+        })
         setActiveGroupClick(false)
+        setActiveClick(true)
+        setActiveGroup(null)
     }
 
     const onGroupActiveClick = () => {
@@ -169,7 +182,6 @@ const Chat = () => {
         setActiveGroupClick(true)
     }
 
-    console.log('ggg', messages[activeUser?.chatId], activeUser?.chatId)
 
     return (
         <div>
@@ -179,11 +191,11 @@ const Chat = () => {
                     {
                         activeClick || activeGroupClick ?
                             <Button disableElevation variant="text" sx={{ fontSize: 18, fontWeight: 500 }} startIcon={<ArrowBackIcon />} onClick={onBackClick} >Users</Button> :
-                            <LeftSide users={users} groups={groups} groupMessages={groupMessages} filteredMessages={messages} setActiveClick={onSetActiveClick} onGroupActiveClick={onGroupActiveClick} />
+                            <LeftSide users={users} groups={groups} groupMessages={groupMessages} filteredMessages={messages} setActiveClick={onActiveClick} onGroupActiveClick={onGroupActiveClick} />
                     }
                 </div>
                 <div className="xl:col-span-4 2xl:col-span-3 hidden xl:block">
-                    <LeftSide users={users} groups={groups} groupMessages={groupMessages} filteredMessages={messages} setActiveClick={onSetActiveClick} onGroupActiveClick={onGroupActiveClick} />
+                    <LeftSide users={users} groups={groups} groupMessages={groupMessages} filteredMessages={messages} setActiveClick={onActiveClick} onGroupActiveClick={onGroupActiveClick} />
                 </div>
                 <div className="xl:col-span-8 2xl:col-span-9 col-span-12">
                     {
@@ -196,6 +208,7 @@ const Chat = () => {
                     }
                 </div>
             </div>
+            <UserListModal onActiveClick={onActiveClick} />
         </div>
     )
 }
