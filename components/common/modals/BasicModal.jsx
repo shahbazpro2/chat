@@ -22,7 +22,6 @@ export default function BasicModal({ modalKey, children }) {
   const modalVal = useModalState(modalKey)
   const openCloseModal = useSetModal()
 
-  console.log(modalVal)
 
   return (
     <div>

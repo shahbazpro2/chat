@@ -3,9 +3,9 @@ import moment from 'moment'
 import React from 'react'
 
 const ChatItem = ({ user, filteredMessages }) => {
-    const { name, online } = user || {}
-    console.log('userssssss', user)
-    const senderMessages = filteredMessages.filter(message => message.senderId === user?.id).slice(-1)
+    const { members, updatedAt } = user || {}
+    const { name, online, id } = members?.[0] || {}
+    const senderMessages = filteredMessages.filter(message => message.senderId === id).slice(-1)
     const unreadMessages = senderMessages.filter(message => !message.read).length
 
 
@@ -20,10 +20,10 @@ const ChatItem = ({ user, filteredMessages }) => {
                     sx={{ '.MuiBadge-badge': { border: '1.5px solid #fff', minWidth: 10, height: 10, borderRadius: '100%' } }}
                     invisible={!online}
                 >
-                    <Avatar alt={name} src='/test' />
+                    <Avatar alt={user?.name || name} src='/test' />
                 </Badge>
                 <div className="ml-3 space-y-1">
-                    <div className={`${unreadMessages ? 'font-semibold' : ''} capitalize`}>{name}</div>
+                    <div className={`${unreadMessages ? 'font-semibold' : ''} capitalize`}>{user?.name || name}</div>
                     <div className="text-gray-500 text-sm">{senderMessages?.[0]?.text}</div>
                 </div>
             </div>
@@ -31,10 +31,13 @@ const ChatItem = ({ user, filteredMessages }) => {
                 <div className="text-gray-500 text-sm">
                     {
                         //make formate like 3m ago
-                        moment(senderMessages?.[0]?.createdAt).fromNow()
+                        moment(updatedAt).fromNow()
                     }
                 </div>
-                <Badge color="error" badgeContent={unreadMessages} className='mr-4' />
+                {
+                    unreadMessages ?
+                        <Badge color="error" badgeContent={unreadMessages} className='mr-4' /> : null
+                }
 
             </div>
 

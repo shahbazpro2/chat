@@ -8,8 +8,8 @@ import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
 import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
-import { activeUserAtom, loggedInUserAtom } from '@jotai/chat';
-import { useAtom } from 'jotai';
+import { activeChatAtom, loggedInUserAtom } from '@jotai/chat';
+import { useAtom, useAtomValue } from 'jotai';
 import axios from 'axios';
 
 const MessageSend = ({ onAttachUpload, handleSendMessage, fileUploading, picUploading, messageSent, setMessageSent }) => {
@@ -17,7 +17,7 @@ const MessageSend = ({ onAttachUpload, handleSendMessage, fileUploading, picUplo
     const [showEmoji, setShowEmoji] = useState(false);
     const [value, setValue] = useState('')
     const [loggedInUser] = useAtom(loggedInUserAtom)
-    const [activeUser] = useAtom(activeUserAtom)
+    const activeChat = useAtomValue(activeChatAtom)
     const attachRef = useRef(null)
     const picRef = useRef(null)
 
@@ -32,10 +32,10 @@ const MessageSend = ({ onAttachUpload, handleSendMessage, fileUploading, picUplo
 
 
     const onFocusBlur = () => {
-        if (!activeUser) return
+        if (!activeChat?.members && activeChat.group) return
         axios.post('/api/messages/read', {
-            senderId: activeUser.id,
-            receiverId: loggedInUser.id
+            senderId: activeChat.members?.[0].id,
+            chatId: activeChat.id
         }).catch(err => {
             console.log(err)
         })
@@ -100,6 +100,7 @@ const MessageSend = ({ onAttachUpload, handleSendMessage, fileUploading, picUplo
                     value={value}
                     fullWidth
                     multiline
+                    maxRows={3}
                     onChange={e => setValue(e.target.value)}
                     onFocus={onFocusBlur}
                     onBlur={onFocusBlur}

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState } from 'react'
 import ChatItem from './components/ChatItem'
-import { activeGroupAtom, activeUserAtom, loggedInUserAtom, pinnedUserAtom, setActiveGroupAtom, setActiveUserAtom } from '@jotai/chat'
+import { activeChatAtom, activeGroupAtom, activeUserAtom, loggedInUserAtom, pinnedGroupAtom, pinnedUserAtom, setActiveChatAtom, setActiveGroupAtom } from '@jotai/chat'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import AddIcon from '@mui/icons-material/Add';
 import { useModalState, useSetModal } from '@jotai/modal';
@@ -12,51 +12,64 @@ import GroupItem from './components/GroupItem';
 import { Button } from '@mui/material';
 
 
-const LeftSide = ({ users, groups, groupMessages, filteredMessages, setActiveClick, onGroupActiveClick }) => {
-    const [activeUser] = useAtom(activeUserAtom)
-    const setActiveUser = useSetAtom(setActiveUserAtom)
-    const setActiveGroup = useSetAtom(setActiveGroupAtom)
-    const activeGroup = useAtomValue(activeGroupAtom)
+const LeftSide = ({ chats, groups, filteredMessages, setActiveClick }) => {
+    const activeChat = useAtomValue(activeChatAtom)
+    const setActiveChat = useSetAtom(activeChatAtom)
     const [search, setSearch] = useState('')
     const [searchUsers, setSearchUsers] = useState([])
-    const [pinnedUsers] = useAtom(pinnedUserAtom)
+    const pinnedUsers = useAtomValue(pinnedUserAtom)
+    const setPinnedChats = useSetAtom(pinnedUserAtom)
+    const setGroupPinnedChats = useSetAtom(pinnedGroupAtom)
+    const pinnedGroupChats = useAtomValue(pinnedGroupAtom)
     const [unpinnedUsers, setUnpinnedUsers] = useState([])
+    const [unpinnedGroups, setUnpinnedGroups] = useState([])
     const openCloseModal = useSetModal()
-    const modalVal = useModalState(modalKeys.userlist)
 
-    console.log('moooo', modalVal)
 
     useEffect(() => {
-        const filteredUsers = users.filter(u => !pinnedUsers.find(p => p.chatId === u.chatId))
-        setUnpinnedUsers(filteredUsers)
-
-    }, [pinnedUsers, users])
+        let unpinnedChats = [], pinnedChats = []
+        chats.forEach(chat => {
+            if (chat.isChatPinned) {
+                pinnedChats.push(chat)
+            } else {
+                unpinnedChats.push(chat)
+            }
+        })
+        setUnpinnedUsers(unpinnedChats)
+        setPinnedChats(pinnedChats)
+    }, [chats])
 
     useEffect(() => {
-        if (!activeUser) {
-            setActiveUser(unpinnedUsers[0])
+        let unpinnedGroupChats = [], pinnedGroupChats = []
+        groups.forEach(chat => {
+            if (chat.isChatPinned) {
+                pinnedGroupChats.push(chat)
+            } else {
+                unpinnedGroupChats.push(chat)
+            }
+        })
+        setUnpinnedGroups(unpinnedGroupChats)
+        setGroupPinnedChats(pinnedGroupChats)
+    }, [chats])
+
+    useEffect(() => {
+        if (!activeChat && (unpinnedUsers?.length > 0)) {
+            setActiveChat(unpinnedUsers[0])
         }
-    }, [])
+    }, [unpinnedUsers])
 
 
     useEffect(() => {
-        setSearchUsers(unpinnedUsers.filter(u => u.name.toLowerCase().includes(search.toLowerCase())))
+        setSearchUsers(unpinnedUsers.filter(u => u?.members?.[0]?.name?.toLowerCase()?.includes(search.toLowerCase())))
         //setSearchUsers(users)
-    }, [search, unpinnedUsers, users])
+    }, [search, unpinnedUsers])
 
 
-
-    const onGroupClick = (group) => {
-        setActiveUser(null)
-        setActiveGroup(group)
-        onGroupActiveClick(group)
-    }
-
-    console.log('gorup', activeGroup)
-    const checkActiveUser = searchUsers.find(u => u.id === activeUser?.id)
+    console.log('gorup', searchUsers, pinnedUsers)
+    const checkActiveUser = searchUsers.find(u => u.id === activeChat?.id)
 
     return (
-        <div className='bg-white rounded-lg py-10 min-h-[75vh] relative'>
+        <div className='bg-white rounded-lg py-10 h-full relative'>
             <div className="pb-2">
                 <div className="flex justify-between px-5">
                     <div className="text-lg font-semibold uppercase">Messages</div>
@@ -80,46 +93,58 @@ const LeftSide = ({ users, groups, groupMessages, filteredMessages, setActiveCli
 
             <div className="max-h-[50vh] overflow-y-auto">
                 {
-                    pinnedUsers?.length > 0 && (
+                    (pinnedUsers?.length > 0 || pinnedGroupChats?.length > 0) && (
                         <div className="my-3 font-bold px-10" >
-                            Pinned Users
+                            Pinned
                         </div>
                     )
                 }
                 <ul>
                     {
-                        pinnedUsers?.map((user) => (
-                            <li key={user?.id} className={`py-4 px-10 cursor-pointer ${user?.id === activeUser?.id && 'bg-gray-100'}`} onClick={() => setActiveClick(user)}>
-                                <ChatItem user={user} filteredMessages={filteredMessages?.[user?.chatId] || []} />
+                        pinnedGroupChats?.map((group) => (
+                            <li key={group?.id} className={`py-4 px-10 cursor-pointer ${group?.id === activeChat?.id && 'bg-gray-100'}`} onClick={() => setActiveClick(group)}>
+                                <GroupItem group={group} filteredMessages={filteredMessages?.[group?.id]} />
                             </li>
                         ))
                     }
-                </ul>
-                <div className="my-3 font-bold px-10" >
-                    Groups
-                </div>
-                <ul>
                     {
-                        groups?.map((group) => (
-                            <li key={group?.id} className={`py-4 px-10 cursor-pointer ${group?.id === activeGroup?.id && 'bg-gray-100'}`} onClick={() => onGroupClick(group)}>
-                                <GroupItem group={group} filteredMessages={groupMessages?.[group?.id]} />
+                        pinnedUsers?.map((user) => (
+                            <li key={user?.id} className={`py-4 px-10 cursor-pointer ${user?.id === activeChat?.id && 'bg-gray-100'}`} onClick={() => setActiveClick(user)}>
+                                <ChatItem user={user} filteredMessages={filteredMessages?.[user?.id] || []} />
                             </li>
                         ))
                     }
                 </ul>
+                {
+                    unpinnedGroups?.length > 0 &&
+                    <>
+                        <div className="my-3 font-bold px-10" >
+                            Groups
+                        </div>
+                        <ul>
+                            {
+                                unpinnedGroups?.map((group) => (
+                                    <li key={group?.id} className={`py-4 px-10 cursor-pointer ${group?.id === activeChat?.id && 'bg-gray-100'}`} onClick={() => setActiveClick(group)}>
+                                        <GroupItem group={group} filteredMessages={filteredMessages?.[group?.id]} />
+                                    </li>
+                                ))
+                            }
+                        </ul>
+                    </>
+                }
                 <div className="my-3 font-bold px-10" >
                     Chat
                 </div>
                 <ul>
                     {
-                        ((!checkActiveUser && activeUser?.id) && !activeUser?.groupId) && !pinnedUsers?.find(p => p.id === activeUser?.id) && <li className='py-4 px-10 cursor-pointer bg-gray-100'>
-                            <ChatItem user={activeUser} filteredMessages={filteredMessages?.[activeUser?.chatId] || []} />
+                        ((!checkActiveUser && !search) && !activeChat?.group && !pinnedUsers?.find(p => p.id === activeChat?.id) && !activeChat?.members) && <li className='py-4 px-10 cursor-pointer bg-gray-100'>
+                            <ChatItem user={activeChat} filteredMessages={filteredMessages?.[activeChat?.chatId] || []} />
                         </li>
                     }
                     {
                         searchUsers.map((user) => (
-                            <li key={user?.chatId} className={`py-4 px-10 cursor-pointer ${user.chatId === activeUser?.chatId && 'bg-gray-100'}`} onClick={() => setActiveClick(user)}>
-                                <ChatItem user={user} filteredMessages={filteredMessages?.[user?.chatId] || []} />
+                            <li key={user?.id} className={`py-4 px-10 cursor-pointer ${user.id === activeChat?.id && 'bg-gray-100'}`} onClick={() => setActiveClick(user)}>
+                                <ChatItem user={user} filteredMessages={filteredMessages?.[user?.id] || []} />
                             </li>
                         ))
                     }

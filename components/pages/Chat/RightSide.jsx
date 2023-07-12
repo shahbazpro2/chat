@@ -2,8 +2,8 @@
 /* eslint-disable react/no-unescaped-entities */
 import React, { useEffect, useRef, useState } from 'react'
 import MessageHeader from './components/MessageHeader'
-import { useAtom, useSetAtom } from 'jotai';
-import { activeUserAtom, loggedInUserAtom, setActiveUserAtom } from '@jotai/chat';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { activeChatAtom, loggedInUserAtom, setActiveChatAtom } from '@jotai/chat';
 import axios from 'axios';
 import moment from 'moment/moment';
 import { dateTimeShow } from '../../../utils/dateTimeshow';
@@ -11,33 +11,36 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import Zoom from 'react-medium-image-zoom'
 import 'react-medium-image-zoom/dist/styles.css'
 import MessageSend from './components/MessageSend';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import DoneIcon from '@mui/icons-material/Done';
 
 const RightSide = ({ filteredMessages }) => {
     const [loggedInUser] = useAtom(loggedInUserAtom)
-    const [activeUser] = useAtom(activeUserAtom)
+    const activeChat = useAtomValue(activeChatAtom)
     const oldMessages = useRef(filteredMessages?.length)
     const [meassagesList, setMeassagesList] = useState({})
-    const setActiveUser = useSetAtom(setActiveUserAtom)
+    const setActiveChat = useSetAtom(activeChatAtom)
     const [fileUploading, setFileUploading] = useState(false)
     const [picUploading, setPicUploading] = useState(false)
     const [messageSent, setMessageSent] = useState(false)
 
     useEffect(() => {
-        document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
-    }, [])
+        setTimeout(() => {
+            document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
+
+        }, 500)
+    }, [activeChat])
 
 
     useEffect(() => {
-        if (!activeUser) return
+        if (!activeChat) return
         const datewiseMessages = {}
         filteredMessages.forEach((message) => {
-            if (message.senderId === activeUser.id || message.receiverId === activeUser.id) {
-                const date = moment(message.createdAt).format('DD/MM/YYYY')
-                if (datewiseMessages[date]) {
-                    datewiseMessages[date].push(message)
-                } else {
-                    datewiseMessages[date] = [message]
-                }
+            const date = moment(message.createdAt).format('DD/MM/YYYY')
+            if (datewiseMessages[date]) {
+                datewiseMessages[date].push(message)
+            } else {
+                datewiseMessages[date] = [message]
             }
         })
         setMeassagesList(datewiseMessages)
@@ -52,22 +55,22 @@ const RightSide = ({ filteredMessages }) => {
             clearTimeout(scroll)
         })
 
-    }, [activeUser, filteredMessages])
+    }, [activeChat, filteredMessages])
 
     const handleSendMessage = (value) => {
         if (!value) return
         const formData = new FormData()
         formData.append('senderId', loggedInUser.id)
-        formData.append('receiverId', activeUser.id)
-        formData.append('chatId', activeUser.chatId)
+        activeChat?.members ? formData.append('chatId', activeChat.id) : formData.append('receiverId', activeChat.id)
         formData.append('text', value)
 
         //smooth scroll to bottom
         document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
         axios.post('/api/messages', formData).then(res => {
             setMessageSent(true)
-            if (!activeUser.chatId) {
-                setActiveUser({ ...activeUser, chatId: res.data.chatId })
+            if (!activeChat?.members) {
+                console.log('ccc', res.data)
+                setActiveChat({ ...res.data })
             }
         }).catch(err => {
             console.log(err)
@@ -80,13 +83,12 @@ const RightSide = ({ filteredMessages }) => {
         const formData = new FormData()
         formData.append('file', file)
         formData.append('senderId', loggedInUser.id)
-        formData.append('receiverId', activeUser.id)
-        formData.append('chatId', activeUser.chatId)
+        activeChat?.members ? formData.append('chatId', activeChat.id) : formData.append('receiverId', activeChat.id)
         type === 'file' ?
             setFileUploading(true) : setPicUploading(true)
         axios.post('/api/messages', formData).then(res => {
-            if (!activeUser.chatId) {
-                setActiveUser({ ...activeUser, chatId: res.data.chatId })
+            if (!activeChat?.members) {
+                setActiveChat({ ...res.data })
             }
         }).catch(err => {
             console.log(err)
@@ -160,7 +162,7 @@ const RightSide = ({ filteredMessages }) => {
                                                             <div className='-mt-2'>.</div>
                                                             <div className='text-xs text-gray-300'>
                                                                 {
-                                                                    message?.read ? 'read' : 'sent'
+                                                                    message?.read ? <DoneAllIcon color="success" sx={{ fontSize: 14 }} /> : <DoneIcon sx={{ fontSize: 14 }} />
                                                                 }
                                                             </div>
 

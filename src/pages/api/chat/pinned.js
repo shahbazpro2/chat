@@ -1,61 +1,48 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 export default async function handler(req, res) {
-    const { id } = req.query || {};
     switch (req.method) {
-        case 'POST':
-            const { pinnedById, chatId } = req.body;
-            const newPinned = await prisma.pinned.create({
+        case 'PATCH':
+            const { chatId, pinnedById, pin } = req.body;
+            if (!pin) {
+                //remove from pinned array
+                const deletedPinnedChat = await prisma.chat.update({
+                    where: {
+                        id: Number(chatId)
+                    },
+                    data: {
+                        pinned: {
+                            disconnect: {
+                                id: Number(pinnedById)
+                            }
+                        },
+                    },
+                    include: {
+                        pinned: true
+                    }
+                })
+                return res.status(200).json(deletedPinnedChat);
+            }
+            //add to pinned array
+            const pinnedChat = await prisma.chat.update({
+                where: {
+                    id: Number(chatId)
+                },
                 data: {
-                    pinnedById,
-                    chatId
-                },
-                include: {
-                    chat: {
-                        include: {
-                            members: true
+                    pinned: {
+                        connect: {
+                            id: Number(pinnedById)
                         }
                     },
-                    pinnedBy: true
-                }
-            });
-
-            return res.status(201).json({
-                ...newPinned.chat.members.filter(member => member.id !== Number(pinnedById))?.[0],
-                chatId: newPinned.chatId,
-                pinnedId: newPinned.id,
-            });
-        case 'GET':
-            const pinned = await prisma.pinned.findMany({
-                where: {
-                    pinnedById: Number(id)
                 },
                 include: {
-                    chat: {
-                        include: {
-                            members: true
-                        }
-                    },
-                    pinnedBy: true
+                    pinned: true
                 }
             })
+            return res.status(200).json(pinnedChat);
 
-            const modifiyPinned = pinned.map(item => {
-                return {
-                    ...item.chat.members.filter(member => member.id !== Number(id))?.[0],
-                    chatId: item.chatId,
-                    pinnedId: item.id,
-                }
-            })
 
-            return res.status(200).json(modifiyPinned);
-        case 'DELETE':
-            const deletedPinned = await prisma.pinned.delete({
-                where: {
-                    id: Number(id),
-                },
-            });
-            return res.status(200).json(deletedPinned);
+
         default:
             return res.status(405).json({ message: 'Method not allowed' });
     }

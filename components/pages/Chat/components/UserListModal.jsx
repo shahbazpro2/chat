@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import BasicModal from '@common/modals/BasicModal'
 import { modalKeys } from '@common/modals/modalKeys'
 import { activeUserAtom, loggedInUserAtom, setActiveUserAtom } from '@jotai/chat'
@@ -21,7 +22,7 @@ const UserListModal = ({ onActiveClick }) => {
 
     useEffect(() => {
         //serach users
-        const filteredUsers = allUsers.filter(u => u.name.toLowerCase().includes(search.toLowerCase()))
+        const filteredUsers = allUsers.filter(u => u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
         setUsers(filteredUsers)
     }, [search])
 
@@ -56,9 +57,10 @@ const UserListModal = ({ onActiveClick }) => {
         if (!title) return alert('Please enter a group title')
         if (selectedUsers.length < 2) return alert('Please select at least 2 users')
 
-        axios.post('/api/group', {
+        axios.post('/api/chat', {
             title,
-            members: [...selectedUsers, loggedInUser?.id]
+            members: [...selectedUsers, loggedInUser?.id],
+            group: true
         }).then(res => {
             console.log(res.data)
             setSelectedUsers([])
@@ -108,18 +110,20 @@ const UserListModal = ({ onActiveClick }) => {
                         users.map(u => (
                             u.id !== loggedInUser?.id &&
                             <>
-                                <div key={u.id} className="flex items-start bg-gray-100 py-2 px-3 my-3">
-                                    {
-                                        isSelecting &&
-                                        <Checkbox size='small' checked={selectedUsers.includes(u.id)} onChange={(e) => onChange(e, u.id)} />
-                                    }
-                                    <div>
-                                        <div className='font-bold'>{u.name}</div>
-                                        <div>{u.email}</div>
+                                <div key={u.id} className="flex items-center bg-gray-100 py-2 px-3 my-3">
+                                    <div className='flex gap-2 items-start'>
+                                        {
+                                            isSelecting &&
+                                            <Checkbox size='small' checked={selectedUsers.includes(u.id)} onChange={(e) => onChange(e, u.id)} />
+                                        }
+                                        <div>
+                                            <div className='font-bold'>{u.name}</div>
+                                            <div>{u.email}</div>
+                                        </div>
                                     </div>
-                                    <div className='ml-auto cursor-pointer' onClick={() => onSingleMessage(u)}>
-                                        <MessageIcon />
-                                    </div>
+                                    <Button size="small" variant='outlined' className='ml-auto cursor-pointer text-xs' onClick={() => onSingleMessage(u)}>
+                                        Message
+                                    </Button>
                                 </div>
                             </>
                         ))

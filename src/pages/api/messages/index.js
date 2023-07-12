@@ -24,15 +24,24 @@ const createMessage = async (req, res, newChatId) => {
             }
 
             if (Number(chatId)) {
-                resolve(await prisma.message.create({
+                const createRes = await prisma.message.create({
                     data: {
                         text: text || '',
                         file: req?.file?.location || null,
                         senderId: Number(senderId),
-                        receiverId: Number(receiverId),
                         chatId: Number(chatId)
                     }
-                }));
+                })
+                //only change update at
+                await prisma.chat.update({
+                    where: {
+                        id: Number(chatId)
+                    },
+                    data: {
+                        updatedAt: new Date()
+                    }
+                })
+                resolve(createRes);
 
             } else {
                 //create a new chat
@@ -44,17 +53,20 @@ const createMessage = async (req, res, newChatId) => {
                                 { id: Number(receiverId) }
                             ]
                         }
+                    },
+                    include: {
+                        members: true
                     }
                 });
-                resolve(await prisma.message.create({
+                await prisma.message.create({
                     data: {
                         text: text || '',
                         file: req?.file?.location || null,
                         senderId: Number(senderId),
-                        receiverId: Number(receiverId),
                         chatId: newChat.id
                     }
-                }));
+                })
+                resolve(newChat);
             }
 
         });
@@ -73,26 +85,26 @@ export default async function handler(req, res) {
             }
         case 'GET':
             const { ids } = req.query;
+            console.log('iddd', ids)
             //split the ids into int and into an array
-            const singleChats = ids?.split(',').map(id => parseInt(id));
+            const chatIds = ids?.split(',').map(id => parseInt(id));
             //get all measseges according to single chats and sperate them according to the single chat id while querying
             const singleChat = await prisma.message.findMany({
 
                 where: {
                     chatId: {
-                        in: singleChats
+                        in: chatIds
                     }
                 },
                 orderBy: {
                     createdAt: 'asc'
                 },
                 include: {
-                    sender: true,
-                    receiver: true
+                    sender: true
                 }
             })
             //seprate all the messages accourding to the single chat id
-            const singleChatMessages = singleChat.reduce((acc, message) => {
+            const chatMessages = singleChat.reduce((acc, message) => {
                 const { chatId } = message;
                 if (!acc[chatId]) {
                     acc[chatId] = [];
@@ -101,7 +113,7 @@ export default async function handler(req, res) {
                 return acc;
             }, {});
 
-            return res.status(200).json(singleChatMessages);
+            return res.status(200).json(chatMessages);
         default:
             return res.status(405).json({ message: 'Method not allowed' });
     }

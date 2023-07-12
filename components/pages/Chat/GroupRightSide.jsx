@@ -2,8 +2,8 @@
 /* eslint-disable react/no-unescaped-entities */
 import React, { useEffect, useRef, useState } from 'react'
 import { Avatar } from '@mui/material'
-import { useAtom } from 'jotai';
-import { activeGroupAtom, activeUserAtom, loggedInUserAtom } from '@jotai/chat';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { activeChatAtom, loggedInUserAtom } from '@jotai/chat';
 import axios from 'axios';
 import moment from 'moment/moment';
 import { dateTimeShow } from '../../../utils/dateTimeshow';
@@ -12,10 +12,13 @@ import MessageSend from './components/MessageSend';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import Zoom from 'react-medium-image-zoom'
 import 'react-medium-image-zoom/dist/styles.css'
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import DoneIcon from '@mui/icons-material/Done';
 
 const GroupRightSide = ({ messages }) => {
     const [loggedInUser] = useAtom(loggedInUserAtom)
-    const [activeGroup] = useAtom(activeGroupAtom)
+    const activeChat = useAtomValue(activeChatAtom)
+    const setActiveChat = useSetAtom(activeChatAtom)
     const oldMessages = useRef(messages?.length)
     const [meassagesList, setMeassagesList] = useState({})
     const [fileUploading, setFileUploading] = useState(false)
@@ -23,12 +26,15 @@ const GroupRightSide = ({ messages }) => {
     const [messageSent, setMessageSent] = useState(false)
 
     useEffect(() => {
-        document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
-    }, [])
+        setTimeout(() => {
+            document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
+
+        }, 500)
+    }, [activeChat])
 
 
     useEffect(() => {
-        if (!activeGroup) return
+        if (!activeChat) return
         const datewiseMessages = {}
         messages?.forEach((message) => {
             const date = moment(message.createdAt).format('DD/MM/YYYY')
@@ -50,17 +56,17 @@ const GroupRightSide = ({ messages }) => {
             clearTimeout(scroll)
         })
 
-    }, [activeGroup, messages])
+    }, [activeChat, messages])
 
     const handleSendMessage = (value) => {
         if (!value) return
         //smooth scroll to bottom
         const formData = new FormData()
         formData.append('senderId', loggedInUser.id)
-        formData.append('groupId', activeGroup.id)
+        formData.append('chatId', activeChat.id)
         formData.append('text', value)
         document.getElementById('msg-body').scrollTo(0, document.getElementById('msg-body').scrollHeight)
-        axios.post('/api/messages/group/', formData).then(res => {
+        axios.post('/api/messages', formData).then(res => {
             setMessageSent(true)
         }).catch(err => {
             console.log(err)
@@ -72,12 +78,12 @@ const GroupRightSide = ({ messages }) => {
         const formData = new FormData()
         formData.append('file', file)
         formData.append('senderId', loggedInUser.id)
-        formData.append('groupId', activeGroup.id)
+        formData.append('chatId', activeChat.id)
         type === 'file' ?
             setFileUploading(true) : setPicUploading(true)
-        axios.post('/api/messages/group/', formData).then(res => {
-            if (!activeUser.chatId) {
-                setActiveUser({ ...activeUser, chatId: res.data.chatId })
+        axios.post('/api/messages', formData).then(res => {
+            if (!activeChat?.members) {
+                setActiveChat({ ...res.data })
             }
         }).catch(err => {
             console.log(err)
@@ -149,12 +155,12 @@ const GroupRightSide = ({ messages }) => {
                                                                     moment(message.createdAt).format('hh:mm a')
                                                                 }
                                                             </div>
-                                                            <div className='-mt-2'>.</div>
+                                                            {/*  <div className='-mt-2'>.</div>
                                                             <div className='text-xs text-gray-300'>
                                                                 {
-                                                                    message?.read ? 'read' : 'sent'
+                                                                    message?.read ? <DoneAllIcon color="success" sx={{ fontSize: 14 }} /> : <DoneIcon sx={{ fontSize: 14 }} />
                                                                 }
-                                                            </div>
+                                                            </div> */}
 
                                                         </div>
 
@@ -168,7 +174,7 @@ const GroupRightSide = ({ messages }) => {
                                                                 {message.sender?.name[0]}
                                                             </Avatar>
                                                             {message.sender?.name}</div>
-                                                        <div>{renderFile(message?.file)}</div>
+                                                        <div className='mt-3'>{renderFile(message?.file)}</div>
                                                         <div className='text-sm mt-3'>{message.text}</div>
                                                         <div className='text-xs text-gray-500 mt-3'>
                                                             {
