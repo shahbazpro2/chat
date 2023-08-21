@@ -162,7 +162,6 @@ const Chat = () => {
 
     return (
         <div>
-            <Header />
             <div className="grid grid-cols-12 gap-2 xl:gap-7 p-3 sm:p-5 2xl:p-16" >
                 <div className="col-span-12 block xl:hidden">
                     {

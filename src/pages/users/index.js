@@ -1,10 +1,12 @@
-import Chat from "@pages/Chat";
 import Users from "@pages/users";
+import React from "react";
 
-export default function Home() {
+const Index = () => {
   return (
     <div>
       <Users />
     </div>
   );
-}
+};
+
+export default Index;

@@ -7,7 +7,33 @@
   scroll-behavior: smooth !important;
 }
 
+.container {
+  @apply px-3 2xl:px-16 py-10 max-w-full;
+}
+
 body {
   background: #f2f2f2;
   font-family: "Poppins", sans-serif;
+  @apply text-gray-700;
+}
+
+.box {
+  @apply bg-white rounded-xl shadow-sm p-5;
+}
+
+.profile-cover {
+  background: url("/assets/cover.jpg");
+  background-size: cover;
+  background-position: center;
+  height: 200px;
+}
+
+.swiper-button-prev,
+.swiper-button-next {
+  @apply shadow-2xl bg-white/70 w-10 h-10 rounded-full text-primary !important;
+}
+
+.swiper-button-prev::after,
+.swiper-button-next::after {
+  font-size: 25px !important;
 }
