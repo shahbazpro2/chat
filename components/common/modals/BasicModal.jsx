@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { useModalState } from 'jotai/modal';
 import { useSetModal } from '@jotai/modal';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 const style = {
   position: 'absolute',
@@ -18,22 +19,29 @@ const style = {
   }
 };
 
-export default function BasicModal({ modalKey, children }) {
+export default function BasicModal({ modalKey, children, sx }) {
   const modalVal = useModalState(modalKey)
   const openCloseModal = useSetModal()
+
+  const onClose = () => {
+    openCloseModal({
+      key: modalKey,
+      state: false,
+      data: null
+    })
+  }
 
 
   return (
     <div>
       <Modal
         open={modalVal?.status}
-        onClose={() => openCloseModal({
-          key: modalKey,
-          state: false,
-          data: null
-        })}
+        onClose={onClose}
       >
-        <Box sx={style}>
+        <Box sx={{ ...style, ...sx }}>
+          <div className="text-end">
+            <CancelIcon className='text-gray-600 cursor-pointer' onClick={onClose} />
+          </div>
           {children}
         </Box>
       </Modal>

@@ -26,12 +26,21 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
 import { Pagination, Navigation } from 'swiper/modules';
+import { matchColor } from '../comp/UserBox';
+import { users } from '../users';
 
 const SingleUser = () => {
     const [matchValue, setMatchValue] = React.useState(0)
     const [value, setValue] = React.useState('0');
+    const [user, setUser] = React.useState({})
     const isSmall = useMediaQuery('(max-width:800px)')
     const router = useRouter()
+    const id = router.query?.id
+
+    useEffect(() => {
+        const user = users.find(user => user.id == id)
+        setUser(user)
+    }, [id])
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
@@ -42,17 +51,7 @@ const SingleUser = () => {
         setMatchValue(match)
     }, [])
 
-    const matchColor = () => {
-        if (matchValue < 50) {
-            return 'bg-error/20'
-        }
-        else if (matchValue < 80) {
-            return 'bg-warning/20'
-        }
-        else {
-            return 'bg-success/20'
-        }
-    }
+
 
     return (
         <div className='container text-gray-800'>
@@ -68,15 +67,16 @@ const SingleUser = () => {
                             <div className="rounded-full bg-gray-300 w-32 h-32 mx-auto -mt-16 shadow-lg border-4 border-white">
                                 <Avatar alt="" className="rounded-full w-full h-full object-cover" />
                             </div>
-                            <div className="text-lg mt-3">@chrisbrown</div>
+                            <div className="text-lg mt-3">{user?.username}</div>
+                            <div className="text-lg text-gray-500">{user?.jobTitle}</div>
                         </div>
                         <div className="col-span-12 lg:col-span-4 p-7 lg:p-0">
                             <div className="flex flex-col sm:flex-row gap-5">
-                                <div className="text-3xl font-bold text-gray-700">Chris Brown</div>
-                                <div className={`rounded bg-success/30 py-2 px-4 text-sm font-bold max-w-[120px] ${matchColor()}`}>{matchValue}% match</div>
+                                <div className="text-3xl font-bold text-gray-700">{user?.name}</div>
+                                <div className={`rounded py-2 px-4 text-sm font-bold max-w-[120px] ${matchColor(matchValue)}`}>{matchValue}% match</div>
                             </div>
                             <div className="flex gap-10 mt-3 px-1">
-                                <div className="">test@test.com</div>
+                                {/*  <div className="">test@test.com</div> */}
                                 <div className="flex gap-3">
                                     <LinkedInIcon color="warning" className='text-2xl' />
                                     <TwitterIcon color="warning" className='text-2xl' />
@@ -86,11 +86,11 @@ const SingleUser = () => {
                             <div className="my-5 flex gap-20">
                                 <div>
                                     <div className="text-primary">Location</div>
-                                    <div className="text-gray-700">Lagos, Nigeria</div>
+                                    <div className="text-gray-700">{user?.location}</div>
                                 </div>
                                 <div>
                                     <div className="text-primary">Age</div>
-                                    <div className="text-gray-700">25</div>
+                                    <div className="text-gray-700">{user?.age} Years</div>
                                 </div>
 
                             </div>
@@ -102,7 +102,7 @@ const SingleUser = () => {
                         <div className="col-span-12 lg:col-span-1">
                             <div className="flex flex-col lg:flex-col sm:flex-row 2xl:flex-row  justify-center lg:justify-start gap-2 items-center">
                                 <Button disableElevation variant="contained" className='bg-primary px-10 capitalize font-bold' >Invite</Button>
-                                <Button disableElevation onClick={() => router.push(`/users/${user.id}`)} variant="outlined" className='capitalize font-bold px-10'>Chat</Button>
+                                <Button disableElevation onClick={() => router.push(`/chat`)} variant="outlined" className='capitalize font-bold px-10'>Chat</Button>
                             </div>
                         </div>
                     </div>
@@ -134,7 +134,7 @@ const SingleUser = () => {
                                         </div>
                                         <div className="flex gap-2">
                                             <WcIcon color="primary" />
-                                            <div>Male</div>
+                                            <div>{user?.gender}</div>
                                         </div>
                                         <div className="flex gap-2">
                                             <SelfImprovementIcon color="primary" />
@@ -146,7 +146,7 @@ const SingleUser = () => {
                                         </div>
                                         <div className="flex gap-2">
                                             <BusinessCenterIcon color="primary" />
-                                            <div>Technology</div>
+                                            <div>{user?.jobType}</div>
                                         </div>
                                         <div className="flex gap-2">
                                             <LanguageIcon color="primary" />

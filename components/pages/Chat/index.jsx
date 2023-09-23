@@ -10,6 +10,7 @@ import { Button } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import GroupRightSide from './GroupRightSide'
 import UserListModal from './components/UserListModal'
+import { useRouter } from 'next/router'
 
 const Chat = () => {
     const ref = useRef(true)
@@ -21,6 +22,8 @@ const Chat = () => {
     const [chats, setChats] = useState([])
     const [groups, setGroups] = useState([])
     const pinnedChat = useAtomValue(pinnedUserAtom)
+    const router = useRouter()
+    const chatUserId = router.query.id
 
     const firstMountRef = useRef(true)
 
@@ -74,12 +77,12 @@ const Chat = () => {
 
 
     useEffect(() => {
-        if (!ref.current) return
-        const promptUser = prompt("Enter id of user")
-        localStorage.setItem('userId', promptUser)
-        axios.get(`/api/users/${promptUser}`)
+        if (!ref.current && !router.isReady) return
+        /* const promptUser = prompt("Enter id of user") */
+        localStorage.setItem('userId', chatUserId)
+        axios.get(`/api/users/${chatUserId}`)
             .then(res => {
-                axios.patch(`/api/users/${promptUser}`, { online: true })
+                axios.patch(`/api/users/${chatUserId}`, { online: true })
                     .then(res => {
                         setLoggedInUser(res.data)
                     })
@@ -94,7 +97,7 @@ const Chat = () => {
         return () => {
             ref.current = false
         }
-    }, [])
+    }, [router])
 
 
     const getChats = () => {

@@ -35,12 +35,12 @@ const Users = () => {
                         </Drawer>
                         <TextField size="small" variant="outlined" placeholder='Search handles' className='order-last md:order-first col-span-2' sx={{ '& .MuiOutlinedInput-root': { paddingRight: 0 }, '& .MuiOutlinedInput-root:focus-visible': { outline: 'none' } }} InputProps={{
                             startAdornment: <SearchIcon />,
-                            endAdornment: <div className='bg-warning p-3 text-white rounded-r-lg '>Username</div>
+                            /* endAdornment: <div className='bg-warning p-3 text-white rounded-r-lg '>Username</div> */
                         }} />
-                        <Select size="small" value="users" className='md:w-32'>
+                        {/* <Select size="small" value="users" className='md:w-32'>
                             <MenuItem value="users">Users</MenuItem>
                             <MenuItem value="groups">Groups</MenuItem>
-                        </Select>
+                        </Select> */}
                     </div>
                 </div>
                 <div className="col-span-1 hidden 2xl:block">

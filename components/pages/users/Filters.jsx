@@ -1,7 +1,8 @@
 import { Accordion, AccordionDetails, AccordionSummary, Checkbox, Menu, MenuItem, Select, Slider, TextField } from '@mui/material';
 import React from 'react'
 import AccordionComp from '@common/AccordionComp';
-const minDistance = 1000;
+const minDistance = 500;
+const maxDistance = 5000;
 const Filters = ({ isDrawer }) => {
     const [value, setValue] = React.useState([2000, 3000]);
 
@@ -10,18 +11,11 @@ const Filters = ({ isDrawer }) => {
         if (!Array.isArray(newValue)) {
             return;
         }
-
-        if (newValue[1] - newValue[0] < minDistance) {
-            if (activeThumb === 0) {
-                const clamped = Math.min(newValue[0], 100 - minDistance);
-                setValue([clamped, clamped + minDistance]);
-            } else {
-                const clamped = Math.max(newValue[1], minDistance);
-                setValue([clamped - minDistance, clamped]);
-            }
-        } else {
-            setValue(newValue);
+        const [min, max] = newValue
+        if ((max - min) < minDistance) {
+            return
         }
+        setValue(newValue);
     };
 
     return (
@@ -51,8 +45,9 @@ const Filters = ({ isDrawer }) => {
                             value={value}
                             onChange={handleSliderChange}
                             valueLabelDisplay="auto"
+                            step={100}
                             min={0}
-                            max={5000}
+                            max={maxDistance}
                             disableSwap
                         />
                     </div>
