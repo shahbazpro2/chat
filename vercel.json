@@ -1,0 +1,8 @@
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }],
+  "functions": {
+    "api/auth/*": {
+      "maxDuration": 10
+    }
+  }
+}
