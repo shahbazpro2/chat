@@ -85,7 +85,7 @@ const UserBox = ({ user }) => {
                 }} variant="outlined" className='capitalize font-bold'>Full Profile</Button>
                 <Button disableElevation variant="contained" className='bg-primary px-10 capitalize font-bold' onClick={(e) => {
                     e.stopPropagation()
-                    router.push(`/chat/1`)
+                    router.push(`/chat/${user.id}`)
                 }}>Chat</Button>
 
             </div>

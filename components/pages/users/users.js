@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
-export const users = Array.from({ length: 100 }, (_, index) => ({
-  id: index + 1,
+export const users = Array.from({ length: 4 }, (_, index) => ({
+  id: index + 3,
   name: faker.person.fullName(),
   email: faker.internet.email(),
   jobType: faker.name.jobType(),

@@ -24,6 +24,7 @@ const GroupRightSide = ({ messages }) => {
     const [fileUploading, setFileUploading] = useState(false)
     const [picUploading, setPicUploading] = useState(false)
     const [messageSent, setMessageSent] = useState(false)
+    const [messageLoading, setMessageLoading] = useState(false)
 
     useEffect(() => {
         setTimeout(() => {
@@ -61,7 +62,9 @@ const GroupRightSide = ({ messages }) => {
     const handleSendMessage = (value) => {
         if (!value) return
         //smooth scroll to bottom
+        setMessageLoading(true)
         const formData = new FormData()
+
         formData.append('senderId', loggedInUser.id)
         formData.append('chatId', activeChat.id)
         formData.append('text', value)
@@ -70,6 +73,9 @@ const GroupRightSide = ({ messages }) => {
             setMessageSent(true)
         }).catch(err => {
             console.log(err)
+        }).finally(() => {
+            setMessageLoading(false
+            )
         })
     }
 
@@ -191,7 +197,7 @@ const GroupRightSide = ({ messages }) => {
                     }
                 </div>
 
-                <MessageSend handleSendMessage={handleSendMessage} onAttachUpload={onAttachUpload} picUploading={picUploading} fileUploading={fileUploading} messageSent={messageSent} setMessageSent={setMessageSent} />
+                <MessageSend handleSendMessage={handleSendMessage} onAttachUpload={onAttachUpload} picUploading={picUploading} fileUploading={fileUploading} messageSent={messageSent} setMessageSent={setMessageSent} messageLoading={messageLoading} />
             </div>
 
         </div >

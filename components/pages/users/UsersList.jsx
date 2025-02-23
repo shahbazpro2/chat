@@ -30,7 +30,7 @@ const UsersList = () => {
                 }
             </div>
             <div className="flex justify-center mt-5">
-                <Pagination color='warning' count={10} shape="rounded" className='mt-5' onChange={handleChangePage} />
+                <Pagination color='warning' count={1} shape="rounded" className='mt-5' onChange={handleChangePage} />
             </div>
             <UserDetailModal keyname={detailModalKey} />
         </div>

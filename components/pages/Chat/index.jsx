@@ -18,12 +18,14 @@ const Chat = () => {
     const setActiveChat = useSetAtom(activeChatAtom)
     const loggedInUser = useAtomValue(loggedInUserAtom)
     const setLoggedInUser = useSetAtom(loggedInUserAtom)
+    const [chatLoading, setChatLoading] = useState(true)
     const [messages, setMessages] = useState([])
     const [chats, setChats] = useState([])
     const [groups, setGroups] = useState([])
     const pinnedChat = useAtomValue(pinnedUserAtom)
     const router = useRouter()
     const chatUserId = router.query.id
+    console.log('chccc', chatUserId)
 
     const firstMountRef = useRef(true)
 
@@ -67,7 +69,7 @@ const Chat = () => {
         getMessages([...chats, ...groups])
         const messageInterval = setInterval(() => {
             getMessages([...chats, ...groups])
-        }, 1000)
+        }, 5000)
 
         return () => {
             clearInterval(messageInterval)
@@ -77,7 +79,7 @@ const Chat = () => {
 
 
     useEffect(() => {
-        if (!ref.current && !router.isReady) return
+        if (!ref.current || !chatUserId) return
         /* const promptUser = prompt("Enter id of user") */
         localStorage.setItem('userId', chatUserId)
         axios.get(`/api/users/${chatUserId}`)
@@ -97,7 +99,7 @@ const Chat = () => {
         return () => {
             ref.current = false
         }
-    }, [router])
+    }, [chatUserId])
 
 
     const getChats = () => {
@@ -126,6 +128,8 @@ const Chat = () => {
         })
             .catch(err => {
                 console.log(err)
+            }).finally(() => {
+                setChatLoading(false)
             })
     }
 
@@ -160,6 +164,7 @@ const Chat = () => {
         groups,
         filteredMessages: messages,
         setActiveClick: onActiveClick,
+        chatLoading
     }
 
 
@@ -178,7 +183,7 @@ const Chat = () => {
                 </div>
                 <div className="xl:col-span-8 2xl:col-span-9 col-span-12">
                     {
-                        (!activeChat?.group) &&
+                        (!activeChat?.group && activeChat?.id) &&
                         <RightSide filteredMessages={messages?.[activeChat?.id] || []} />
                     }
                     {

@@ -23,6 +23,7 @@ const RightSide = ({ filteredMessages }) => {
     const [fileUploading, setFileUploading] = useState(false)
     const [picUploading, setPicUploading] = useState(false)
     const [messageSent, setMessageSent] = useState(false)
+    const [messageLoading, setMessageLoading] = useState(false)
 
     useEffect(() => {
         setTimeout(() => {
@@ -59,6 +60,7 @@ const RightSide = ({ filteredMessages }) => {
 
     const handleSendMessage = (value) => {
         if (!value) return
+        setMessageLoading(true)
         const formData = new FormData()
         formData.append('senderId', loggedInUser.id)
         activeChat?.members ? formData.append('chatId', activeChat.id) : formData.append('receiverId', activeChat.id)
@@ -74,7 +76,10 @@ const RightSide = ({ filteredMessages }) => {
             }
         }).catch(err => {
             console.log(err)
-        })
+        }).finally(() => {
+            setMessageLoading(false)
+        }
+        )
 
     }
 
@@ -190,7 +195,7 @@ const RightSide = ({ filteredMessages }) => {
                     }
                 </div>
 
-                <MessageSend handleSendMessage={handleSendMessage} onAttachUpload={onAttachUpload} picUploading={picUploading} fileUploading={fileUploading} messageSent={messageSent} setMessageSent={setMessageSent} />
+                <MessageSend handleSendMessage={handleSendMessage} onAttachUpload={onAttachUpload} picUploading={picUploading} fileUploading={fileUploading} messageSent={messageSent} setMessageSent={setMessageSent} messageLoading={messageLoading} />
             </div>
 
         </div >

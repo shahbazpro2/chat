@@ -3,7 +3,7 @@ import BasicModal from '@common/modals/BasicModal'
 import { modalKeys } from '@common/modals/modalKeys'
 import { activeUserAtom, loggedInUserAtom, setActiveUserAtom } from '@jotai/chat'
 import { useModalState, useSetModal } from '@jotai/modal'
-import { Button, Checkbox, Divider, FormControlLabel, TextField } from '@mui/material'
+import { Button, Checkbox, CircularProgress, Divider, FormControlLabel, TextField } from '@mui/material'
 import axios from 'axios'
 import { useAtom, useSetAtom } from 'jotai'
 import React, { memo, useEffect, useState } from 'react'
@@ -12,6 +12,7 @@ import MessageIcon from '@mui/icons-material/Message';
 const UserListModal = ({ onActiveClick }) => {
     const [allUsers, setAllUsers] = useState([])
     const [users, setUsers] = useState([])
+    const [usersLoading, setUsersLoading] = useState(false)
     const [isSelecting, setIsSelecting] = useState(true)
     const [selectedUsers, setSelectedUsers] = useState([])
     const [title, setTitle] = useState('')
@@ -28,13 +29,16 @@ const UserListModal = ({ onActiveClick }) => {
 
     useEffect(() => {
         if (modalVal?.status)
-            axios.get('/api/users').then(res => {
-                setUsers(res.data)
-                setAllUsers(res.data)
+            setUsersLoading(true)
+        axios.get('/api/users').then(res => {
+            setUsers(res.data)
+            setAllUsers(res.data)
+        })
+            .catch(err => {
+                console.log(err)
+            }).finally(() => {
+                setUsersLoading(false)
             })
-                .catch(err => {
-                    console.log(err)
-                })
     }, [modalVal])
 
     const onChange = (e, id) => {
@@ -107,26 +111,31 @@ const UserListModal = ({ onActiveClick }) => {
                 </div>
                 <div className="h-[40vh] overflow-y-auto">
                     {
-                        users.map(u => (
-                            u.id !== loggedInUser?.id &&
-                            <>
-                                <div key={u.id} className="flex items-center bg-gray-100 py-2 px-3 my-3">
-                                    <div className='flex gap-2 items-start'>
-                                        {
-                                            isSelecting &&
-                                            <Checkbox size='small' checked={selectedUsers.includes(u.id)} onChange={(e) => onChange(e, u.id)} />
-                                        }
-                                        <div>
-                                            <div className='font-bold'>{u.name}</div>
-                                            <div>{u.email}</div>
+                        usersLoading ?
+                            <div className='flex justify-center items-center h-full'>
+                                <CircularProgress />
+                            </div>
+                            :
+                            users.map(u => (
+                                u.id !== loggedInUser?.id &&
+                                <>
+                                    <div key={u.id} className="flex items-center bg-gray-100 py-2 px-3 my-3">
+                                        <div className='flex gap-2 items-start'>
+                                            {
+                                                isSelecting &&
+                                                <Checkbox size='small' checked={selectedUsers.includes(u.id)} onChange={(e) => onChange(e, u.id)} />
+                                            }
+                                            <div>
+                                                <div className='font-bold'>{u.name}</div>
+                                                <div>{u.email}</div>
+                                            </div>
                                         </div>
+                                        <Button size="small" variant='outlined' className='ml-auto cursor-pointer text-xs' onClick={() => onSingleMessage(u)}>
+                                            Message
+                                        </Button>
                                     </div>
-                                    <Button size="small" variant='outlined' className='ml-auto cursor-pointer text-xs' onClick={() => onSingleMessage(u)}>
-                                        Message
-                                    </Button>
-                                </div>
-                            </>
-                        ))
+                                </>
+                            ))
 
                     }
                 </div>

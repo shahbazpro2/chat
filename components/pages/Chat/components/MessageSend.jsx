@@ -12,7 +12,7 @@ import { activeChatAtom, loggedInUserAtom } from '@jotai/chat';
 import { useAtom, useAtomValue } from 'jotai';
 import axios from 'axios';
 
-const MessageSend = ({ onAttachUpload, handleSendMessage, fileUploading, picUploading, messageSent, setMessageSent }) => {
+const MessageSend = ({ messageLoading, onAttachUpload, handleSendMessage, fileUploading, picUploading, messageSent, setMessageSent }) => {
     const [showAttach, setShowAttach] = useState(false);
     const [showEmoji, setShowEmoji] = useState(false);
     const [value, setValue] = useState('')
@@ -106,9 +106,12 @@ const MessageSend = ({ onAttachUpload, handleSendMessage, fileUploading, picUplo
                     onBlur={onFocusBlur}
                 />
                 <div className="flex items-end">
-                    <div className='bg-primary text-white rounded h-10 w-10 flex justify-center items-center mb-1 cursor-pointer' onClick={() => handleSendMessage(value)}>
-                        <SendIcon />
-                    </div>
+                    <button disabled={messageLoading} className='bg-primary text-white rounded h-10 w-10 flex justify-center items-center mb-1 cursor-pointer' onClick={() => handleSendMessage(value)}>
+                        {
+                            messageLoading ? <CircularProgress sx={{ color: 'white' }} size={20} /> :
+                                <SendIcon />
+                        }
+                    </button>
                 </div>
 
             </div>

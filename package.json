@@ -6,11 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "prisma": {
-  "seed": "node prisma/seed.js"
-},
-
+    "lint": "next lint"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@aws-sdk/abort-controller": "^3.329.0",
