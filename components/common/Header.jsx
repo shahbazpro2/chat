@@ -62,7 +62,7 @@ function Header() {
                         display: { xs: 'none', md: 'flex' },
                     }}
                 >
-                    <img src='/assets/logo.png' alt='logo' className='h-14' />
+                    <img src='/assets/Logo.png' alt='logo' className='h-14' />
                 </Typography>
 
                 <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none', color: 'black' } }}>
