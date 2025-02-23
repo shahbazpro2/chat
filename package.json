@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build"
+    "postinstall": "cd backend && prisma generate",
+    "vercel-build": "cd backend && prisma generate && prisma migrate deploy && cd .. && next build"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
